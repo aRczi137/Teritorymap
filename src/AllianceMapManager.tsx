@@ -521,7 +521,46 @@ const AllianceMapManager: React.FC = () => {
     setHoveredRegion(null);
   };
 
-  
+  const regionPointsMap = React.useMemo(() => {
+    // Sprawdzenie, czy REGION_DATA jest dostępne
+    if (typeof REGION_DATA === 'undefined' || !Array.isArray(REGION_DATA)) {
+        console.error("REGION_DATA is not defined or is not an array.");
+        return {};
+    }
+
+    return REGION_DATA.reduce((acc, region) => {
+        // Używamy 'number' regionu jako jego wartości punktowej
+        acc[region.id] = region.number; 
+        return acc;
+    }, {} as Record<string, number>);
+}, []);
+
+
+// ✨ NOWA FUNKCJA: Obliczanie punktacji dla sojuszy
+const calculateAllianceScores = React.useCallback(() => {
+    const scores: Record<number, number> = {};
+
+    // 1. Inicjalizacja wyników dla wszystkich sojuszy
+    alliances.forEach(alliance => {
+        scores[alliance.id] = 0;
+    });
+
+    // 2. Iteracja przez regiony zajęte (regionColors) i dodawanie punktów do sojuszy
+    Object.entries(regionColors).forEach(([regionId, allianceId]) => {
+        // Pobieramy punkty używając regionId z mapy
+        const points = regionPointsMap[regionId];
+
+        // Sprawdzamy, czy punkty są liczbą i czy sojusz jest poprawny
+        if (typeof points === 'number' && scores[allianceId] !== undefined) {
+            scores[allianceId] += points;
+        }
+    });
+
+    return scores;
+}, [alliances, regionColors, regionPointsMap]); 
+
+// Wywołujemy funkcję obliczającą punkty za każdym razem, gdy zmieni się regionColors lub alliances
+const allianceScores = calculateAllianceScores();
   
   return (
     <div className="flex h-screen bg-gray-900 text-gray-100 relative">
@@ -819,9 +858,30 @@ const AllianceMapManager: React.FC = () => {
                 <span className="text-gray-400">Free:</span>
                 <span className="font-semibold text-gray-500">{ALL_REGIONS_COUNT - getTotalRegions()}</span>
               </div>
+              <h3 className="text-sm font-semibold mb-3 text-gray-300">Points</h3>
+              <div className="space-y-2 ">
+                {/* ✨ NOWE ELEMENTY: PUNKTACJA DLA KAŻDEGO SOJUSZU */}
+                {alliances
+                    // Sortowanie malejące na podstawie punktacji
+                    .sort((a, b) => (allianceScores[b.id] || 0) - (allianceScores[a.id] || 0)) 
+                    .map(alliance => (
+                        <div key={alliance.id} className="flex justify-between items-center ">
+                            <div className="flex items-center gap-2">
+                                <span 
+                                    className="w-2 h-2 rounded-full" 
+                                    style={{ backgroundColor: alliance.color }}
+                                ></span>
+                                <span className="text-gray-400 font-normal">{alliance.name}:</span>
+                            </div>
+                            <span className="font-bold text-s text-gray-300">
+                                {allianceScores[alliance.id] || 0}
+                            </span>
+                        </div>
+                    ))
+                }
+              </div>
             </div>
           </div>
-
           {/* Actions */}
           <div className="space-y-2">
             
@@ -848,7 +908,6 @@ const AllianceMapManager: React.FC = () => {
             </button>
           </div>
         </div>
-
       </div>
     </div>
   );
