@@ -74,7 +74,7 @@
 ## 🚀 Demo
 
 ### Screenshot
-![Alliance Map Manager Preview](https://via.placeholder.com/800x400/1f2937/ffffff?text=Alliance+Map+Manager)
+![Alliance Map Manager Preview](![alt text](image.png))
 
 ### Live Demo
 > Deploy this app to Vercel, Netlify, or GitHub Pages to share your live demo URL
