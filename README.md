@@ -74,10 +74,7 @@
 ## 🚀 Demo
 
 ### Screenshot
-![Alliance Map Manager Preview](![alt text](image.png))
-
-### Live Demo
-> Deploy this app to Vercel, Netlify, or GitHub Pages to share your live demo URL
+![alt text](image.png)
 
 ---
 
@@ -258,7 +255,7 @@ Contributions are welcome! Here's how you can help:
 **aRczi S49**
 
 - Discord: `.arczi.`
-- GitHub: [@yourusername](https://github.com/yourusername)
+- GitHub: [@aRczi137](https://github.com/aRczi137)
 
 ### Credits
 - Map data based on strategic gaming territory system
@@ -305,8 +302,7 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 Having issues or questions?
 
 - 💬 **Discord**: Contact `.arczi.`
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/yourusername/alliance-map-manager/issues)
-- 📧 **Email**: your.email@example.com
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/aRczi137/Teritorymap/issues)
 
 ---
 
@@ -314,6 +310,6 @@ Having issues or questions?
 
 **⭐ Star this repo if you find it useful! ⭐**
 
-Made with 🗺️ by aRczi S49
+Made with 🗺️ by aRczi
 
 </div>
