@@ -26,7 +26,7 @@
 
 ## 🎯 Overview
 
-**Alliance Map Manager** is a web-based interactive map tool designed for strategic territory management in gaming communities. It allows players to visualize, assign, and track territorial control across alliances with a maximum of **8 territories per alliance**.
+**Alliance Map Manager** is a web-based interactive map tool designed for strategic territory management in Dark War Survival game. It allows players to visualize, assign, and track territorial control across alliances with a maximum of **8 territories per alliance**.
 
 ### Key Highlights
 - ✅ **87 unique territories** with level-based strategic value (LVL 1-6)
