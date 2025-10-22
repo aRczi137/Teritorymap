@@ -34,6 +34,12 @@ interface RegionData {
   x?: number; // Opcjonalne w tablicy REGION_DATA
   y?: number; // Opcjonalne w tablicy REGION_DATA
 }
+interface Buff {
+  id: string;
+  name: string;
+  category: 'wood' | 'electricity' | 'iron' | 'combat' | 'building' | 'training' | 'research';
+  icon: string;
+}
 /*
 // === NOWY INTERFEJS DANYCH MAPY ZAPISYWANYCH W FIRESTORE ===
 interface MapData {
@@ -48,6 +54,118 @@ interface MapData {
 
 // --- KONFIGURACJA DEWELOPERSKA ---
 const DEBUG_MODE_ENABLED = false;
+
+// --- LISTA DOSTĘPNYCH BUFÓW ---
+const AVAILABLE_BUFFS: Buff[] = [
+  { id: 'wood_output_5', name: '+5% Wood Output/h', category: 'wood', icon: '🪵' },
+  { id: 'electricity_output_5', name: '+5% Electricity Output/h', category: 'electricity', icon: '⚡' },
+  { id: 'iron_output_5', name: '+5% Iron Output/h', category: 'iron', icon: '⚙️' },
+  { id: 'wood_gathering_5', name: '+5% Wood Gathering Speed', category: 'wood', icon: '🪵' },
+  { id: 'electricity_gathering_5', name: '+5% Electricity Gathering Speed', category: 'electricity', icon: '⚡' },
+  { id: 'iron_gathering_5', name: '+5% Iron Gathering Speed', category: 'iron', icon: '⚙️' },
+  { id: 'wood_output_10', name: '+10% Wood Output/h', category: 'wood', icon: '🪵' },
+  { id: 'electricity_output_10', name: '+10% Electricity Output/h', category: 'electricity', icon: '⚡' },
+  { id: 'iron_output_10', name: '+10% Iron Output/h', category: 'iron', icon: '⚙️' },
+  { id: 'wood_gathering_10', name: '+10% Wood Gathering Speed', category: 'wood', icon: '🪵' },
+  { id: 'electricity_gathering_10', name: '+10% Electricity Gathering Speed', category: 'electricity', icon: '⚡' },
+  { id: 'iron_gathering_10', name: '+10% Iron Gathering Speed', category: 'iron', icon: '⚙️' },
+  { id: 'shooter_attack', name: '+5% Shooter Attack', category: 'combat', icon: '⚔️' },
+  { id: 'rider_attack', name: '+5% Rider Attack', category: 'combat', icon: '⚔️' },
+  { id: 'fighter_attack', name: '+5% Fighter Attack', category: 'combat', icon: '⚔️' },
+  { id: 'troop_attack', name: '+2% Troop Attack', category: 'combat', icon: '⚔️' },
+  { id: 'construction_speed', name: '+5% Construction Speed', category: 'building', icon: '🏗️' },
+  { id: 'training_speed', name: '+25% Troop Training Speed', category: 'training', icon: '👥' },
+  { id: 'research_speed', name: '+5% Research Speed', category: 'research', icon: '🔬' },
+];
+
+const PERMANENT_BUFFS: Record<string, string> = {
+  'r1': 'electricity_output_5',
+  'r2': 'electricity_output_5',
+  'r3': 'iron_output_5',
+  'r4': 'iron_gathering_5',
+  'r5': 'electricity_output_5',
+  'r6': 'electricity_output_5',
+  'r7': 'wood_output_5',
+  'r8': 'wood_output_5',
+  'r9': 'electricity_gathering_5',
+  'r10': 'iron_output_5',
+  'r11': 'electricity_output_5',
+  'r12': 'wood_gathering_5',
+  'r13': 'wood_gathering_5',
+  'r14': 'iron_gathering_5',
+  'r15': 'iron_gathering_5',
+  'r16': 'iron_output_5',
+  'r17': 'wood_output_5',
+  'r18': 'electricity_output_5',
+  'r19': 'electricity_output_5',
+  'r20': 'iron_output_10',
+  'r21': 'electricity_output_5',
+  'r22': 'iron_output_5',
+  'r23': 'wood_output_5',
+  'r24': 'electricity_gathering_10',
+  'r25': 'iron_output_5',
+  'r26': 'electricity_output_5',
+  'r27': 'rider_attack',
+  'r28': 'electricity_output_10',
+  'r29': 'wood_output_10',
+  'r30': 'wood_output_10',
+  'r31': 'wood_gathering_5',
+  'r32': 'iron_gathering_5',
+  'r33': 'fighter_attack',
+  'r34': 'iron_output_10',
+  'r36': 'training_speed',
+  'r37': 'electricity_output_5',
+  'r38': 'wood_gathering_10',
+  'r39': 'electricity_output_10',
+  'r40': 'wood_output_5',
+  'r41': 'research_speed',
+  'r42': 'wood_output_5',
+  'r43': 'iron_gathering_10',
+  'r44': 'electricity_gathering_5',
+  'r45': 'wood_output_10',
+  'r46': 'shooter_attack',
+  'r47': 'construction_speed',
+  'r48': 'electricity_output_10',
+  'r49': 'iron_gathering_10',
+  'r50': 'iron_output_5',
+  'r51': 'wood_output_5',
+  'r52': 'troop_attack',
+  'r53': 'wood_gathering_5',
+  'r54': 'electricity_gathering_10',
+  'r55': 'electricity_output_5',
+  'r56': 'electricity_gathering_5',
+  'r57': 'wood_gathering_5',
+  'r58': 'iron_gathering_5',
+  'r59': 'iron_output_10',
+  'r60': 'wood_gathering_10',
+  'r62': 'iron_gathering_10',
+  'r61': 'wood_output_5',
+  'r63': 'wood_output_10',
+  'r64': 'electricity_output_10',
+  'r69': 'iron_output_10',
+  'r65': 'wood_gathering_5',
+  'r66': 'iron_output_5',
+  'r67': 'wood_output_5',
+  'r68': 'iron_output_5',
+  'r71': 'electricity_output_5',
+  'r72': 'wood_output_5',
+  'r70': 'electricity_gathering_5',
+  'r73': 'electricity_gathering_5',
+  'r74': 'wood_output_5',
+  'r75': 'iron_gathering_5',
+  'r77': 'electricity_output_5',
+  'r76': 'electricity_gathering_5',
+  'r78': 'wood_gathering_5',
+  'r80': 'electricity_output_5',
+  'r79': 'iron_output_5',
+  'r81': 'iron_output_5',
+  'r82': 'electricity_output_5',
+  'r83': 'iron_output_5',
+  'r84': 'iron_output_5',
+  'r85': 'wood_output_5',
+  'r86': 'electricity_output_5',
+  'r87': 'wood_output_5',
+};
 
 // --- KROK 1: Centralna Tablica Danych Regionów ---
 // Użycie typu RegionData[]
@@ -169,6 +287,9 @@ const AllianceMapManager: React.FC = () => {
   const [isEditingCenters, setIsEditingCenters] = useState<boolean>(false);
   const [manualCenterOverrides, setManualCenterOverrides] = useState<Record<string, RegionCenter>>({});
   const [regionCenters, setRegionCenters] = useState<Record<string, RegionCenter>>({});
+  const [showBuffModal, setShowBuffModal] = useState<boolean>(false);
+  const [selectedRegionForBuff, setSelectedRegionForBuff] = useState<string | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<number | null>(null);
   
   // Ref dla elementu SVG
   // const svgRef = useRef<SVGSVGElement>(null);
@@ -371,6 +492,7 @@ const AllianceMapManager: React.FC = () => {
     const dataToSave = {
       alliances,
       regionColors,
+      PERMANENT_BUFFS,
       activeAllianceId,
       manualCenterOverrides
     };
@@ -521,6 +643,44 @@ const AllianceMapManager: React.FC = () => {
     setHoveredRegion(null);
   };
 
+  // Long press handlers for mobile
+  const handleTouchStart = (regionId: string) => {
+    const timer = window.setTimeout(() => {
+      setSelectedRegionForBuff(regionId);
+      setShowBuffModal(true);
+    }, 500); // 500ms for long press
+    setLongPressTimer(timer);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+
+  const getBuffsByAlliance = (allianceId: number) => {
+  const buffs: Record<string, number> = {};
+  Object.entries(regionColors).forEach(([regionId, owner]) => {
+    if (owner === allianceId && PERMANENT_BUFFS[regionId]) {
+      const buff = AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[regionId]);
+      if (buff) {
+        // Wyciągnij wartość procentową z nazwy buffa (np. "+5%" -> 5)
+        const match = buff.name.match(/\+(\d+)%/);
+        const value = match ? parseInt(match[1]) : 1;
+        
+        // Usuń wartość procentową z nazwy dla klucza (np. "+5% Wood Output/h" -> "Wood Output/h")
+        const baseName = buff.name.replace(/\+\d+%\s*/, '');
+        
+        buffs[baseName] = (buffs[baseName] || 0) + value;
+      }
+    }
+  });
+  return buffs;
+};
+
+
   const regionPointsMap = React.useMemo(() => {
     // Sprawdzenie, czy REGION_DATA jest dostępne
     if (typeof REGION_DATA === 'undefined' || !Array.isArray(REGION_DATA)) {
@@ -613,6 +773,7 @@ const allianceScores = calculateAllianceScores();
               {REGION_DATA.map(region => {
                 const center = regionCenters[region.id];
                 const regionIsHovered = hoveredRegion === region.id;
+                const regionBuff = PERMANENT_BUFFS[region.id] ? AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[region.id]) : null;
                 
                 const centerX = center ? center.x : 0;
                 const centerY = center ? center.y : 0;
@@ -627,7 +788,9 @@ const allianceScores = calculateAllianceScores();
                       d={region.d} 
                       onClick={handlePathClick} 
                       onMouseEnter={handlePathHover} 
-                      onMouseLeave={handlePathLeave} 
+                      onMouseLeave={handlePathLeave}
+                      onTouchStart={() => handleTouchStart(region.id)}
+                      onTouchEnd={handleTouchEnd} 
                       style={{
                           fill: '#d1d5db', 
                           fillOpacity: 0.5, 
@@ -636,7 +799,12 @@ const allianceScores = calculateAllianceScores();
                           transition: 'all 0.2s', 
                           cursor: isEditingCenters ? 'crosshair' : 'pointer',
                       }} 
-                    />
+                    >
+                      {/* Tooltip for desktop */}
+                      {regionBuff && (
+                        <title>{regionBuff.name}</title>
+                      )}
+                    </path>
                     
                     {/* TEXT (CYFERKA) */}
                      {center && (
@@ -657,6 +825,20 @@ const allianceScores = calculateAllianceScores();
                         >
                           {region.number}
                         </text>
+                        {/* BUFF ICON */}
+                        {PERMANENT_BUFFS[region.id] && (
+                          <text
+                            x={centerX + 5}
+                            y={centerY - (regionColors[region.id] ? 10 : 0)}
+                            className="pointer-events-none"
+                            style={{
+                              fontSize: '16px',
+                              filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.8))',
+                            }}
+                          >
+                            {AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[region.id])?.icon}
+                          </text>
+                        )}
                         {regionColors[region.id] && (
                           <text
                             x={centerX}
@@ -882,6 +1064,39 @@ const allianceScores = calculateAllianceScores();
               </div>
             </div>
           </div>
+    
+
+          {/* Alliance Buffs Summary */}
+          <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
+            <h3 className="text-sm font-semibold mb-3 text-gray-300">Alliance Buffs</h3>
+            {alliances.map(alliance => {
+              const buffs = getBuffsByAlliance(alliance.id);
+              const hasBuffs = Object.keys(buffs).length > 0;
+              
+              return (
+                <div key={alliance.id} className="mb-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span 
+                      className="w-2 h-2 rounded-full" 
+                      style={{ backgroundColor: alliance.color }}
+                    ></span>
+                    <span className="text-sm font-semibold">{alliance.name}</span>
+                  </div>
+                  {hasBuffs ? (
+                    <div className="ml-4 space-y-1">
+                      {Object.entries(buffs).map(([buffName, value]) => (
+                        <div key={buffName} className="text-xs text-gray-400">
+                          • +{value}% {buffName}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="ml-4 text-xs text-gray-500 italic">No buffs</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
           {/* Actions */}
           <div className="space-y-2">
             
@@ -909,6 +1124,60 @@ const allianceScores = calculateAllianceScores();
           </div>
         </div>
       </div>
+
+      {/* Buff Info Modal (for mobile) */}
+      {showBuffModal && selectedRegionForBuff && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowBuffModal(false)}
+        >
+          <div 
+            className="bg-gray-800 rounded-lg p-4 max-w-sm w-full border border-gray-600"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-bold mb-3">
+              Territory #{REGION_DATA.find(r => r.id === selectedRegionForBuff)?.number}
+            </h3>
+            
+            {PERMANENT_BUFFS[selectedRegionForBuff] ? (
+              <div className="mb-4">
+                <div className="text-3xl mb-2 text-center">
+                  {AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[selectedRegionForBuff])?.icon}
+                </div>
+                <div className="text-base font-semibold text-center text-blue-400">
+                  {AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[selectedRegionForBuff])?.name}
+                </div>
+              </div>
+            ) : (
+              <div className="mb-4 text-center text-gray-400">
+                No buff assigned to this territory
+              </div>
+            )}
+            
+            {regionColors[selectedRegionForBuff] && (
+              <div className="mb-4 p-2 bg-gray-700 rounded">
+                <div className="text-sm text-gray-400 mb-1">Controlled by:</div>
+                <div className="flex items-center gap-2">
+                  <span 
+                    className="w-3 h-3 rounded-full" 
+                    style={{ backgroundColor: alliances.find(a => a.id === regionColors[selectedRegionForBuff])?.color }}
+                  ></span>
+                  <span className="font-semibold">
+                    {alliances.find(a => a.id === regionColors[selectedRegionForBuff])?.name}
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            <button
+              onClick={() => setShowBuffModal(false)}
+              className="w-full p-2 bg-blue-600 hover:bg-blue-700 rounded transition font-medium"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
