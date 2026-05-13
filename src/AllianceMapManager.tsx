@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Trash2, RotateCcw, Menu, X, Settings, Download } from 'lucide-react';
+import { Plus, Trash2, RotateCcw, Menu, X, Settings, Download, ClipboardCopy, Undo2, Redo2 } from 'lucide-react';
 
 /* === NOWE IMPORTY FIREBASE (Zakładamy, że masz już utworzony plik src/firebaseConfig.ts) ===
 import { db } from './firebaseConfig'; 
@@ -25,6 +25,12 @@ const MAP_DOCUMENT_ID = "mapaGłówna";
 interface RegionCenter {
   x: number;
   y: number;
+}
+
+interface HistoryEntry {
+  regionId: string;
+  previousAllianceId: number | null;
+  newAllianceId: number | null;
 }
 
 interface RegionData {
@@ -263,6 +269,142 @@ const REGION_DATA: RegionData[] = [
 // Całkowita liczba regionów (liczba obiektów w REGION_DATA)
 const ALL_REGIONS_COUNT = REGION_DATA.length; 
 
+// === DISCORD EXPORT FORMATTER ===
+
+export interface FormatDiscordMessageParams {
+  alliances: Alliance[];
+  regionColors: Record<string, number>;
+  regionData: RegionData[];
+  permanentBuffs: Record<string, string>;
+  availableBuffs: Buff[];
+}
+
+interface AllianceExportData {
+  id: number;
+  name: string;
+  score: number;
+  regionCount: number;
+  buffs: Record<string, number>;
+}
+
+export function formatDiscordMessage(params: FormatDiscordMessageParams): string {
+  const { alliances, regionColors, regionData, permanentBuffs, availableBuffs } = params;
+
+  // Build a set of valid alliance IDs for filtering
+  const validAllianceIds = new Set(alliances.map(a => a.id));
+
+  // Filter regionColors to only include entries referencing existing alliance IDs
+  const validRegionColors: Record<string, number> = {};
+  for (const [regionId, allianceId] of Object.entries(regionColors)) {
+    if (validAllianceIds.has(allianceId)) {
+      validRegionColors[regionId] = allianceId;
+    }
+  }
+
+  // Build a lookup for buff definitions by id
+  const buffLookup: Record<string, Buff> = {};
+  for (const buff of availableBuffs) {
+    buffLookup[buff.id] = buff;
+  }
+
+  // Calculate per-alliance data
+  const allianceDataMap = new Map<number, AllianceExportData>();
+  for (const alliance of alliances) {
+    allianceDataMap.set(alliance.id, {
+      id: alliance.id,
+      name: alliance.name,
+      score: 0,
+      regionCount: 0,
+      buffs: {},
+    });
+  }
+
+  // Process each valid region assignment
+  for (const [regionId, allianceId] of Object.entries(validRegionColors)) {
+    const allianceData = allianceDataMap.get(allianceId);
+    if (!allianceData) continue;
+
+    // Find the region in regionData
+    const region = regionData.find(r => r.id === regionId);
+    if (!region) continue;
+
+    // Add score (region.number)
+    allianceData.score += region.number;
+    allianceData.regionCount += 1;
+
+    // Aggregate buffs for this region
+    const buffId = permanentBuffs[regionId];
+    if (buffId) {
+      const buffDef = buffLookup[buffId];
+      if (buffDef) {
+        // Extract percentage value from buff name (e.g., "+5% Wood Output/h" -> 5)
+        const percentMatch = buffDef.name.match(/\+(\d+)%/);
+        const percentValue = percentMatch ? parseInt(percentMatch[1], 10) : 0;
+        const buffName = buffDef.name.replace(/\+\d+%\s*/, '');
+        if (percentValue > 0) {
+          allianceData.buffs[buffName] = (allianceData.buffs[buffName] || 0) + percentValue;
+        }
+      }
+    }
+  }
+
+  // Sort alliances: descending by score, then alphabetically by name for ties
+  const sortedAlliances = Array.from(allianceDataMap.values()).sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return a.name.localeCompare(b.name);
+  });
+
+  // Calculate territory counts
+  const totalTerritories = regionData.length;
+  const assignedTerritories = Object.keys(validRegionColors).filter(
+    regionId => regionData.some(r => r.id === regionId)
+  ).length;
+  const freeTerritories = totalTerritories - assignedTerritories;
+
+  // Build output sections
+  const lines: string[] = [];
+
+  // Header
+  lines.push('**🗺️ Territory Map Summary**');
+  lines.push('');
+
+  // Territory Overview
+  lines.push('**📊 Territory Overview**');
+  lines.push('```');
+  lines.push(`Total: ${totalTerritories} | Assigned: ${assignedTerritories} | Free: ${freeTerritories}`);
+  lines.push('```');
+  lines.push('');
+
+  // Alliance Rankings
+  lines.push('**🏆 Alliance Rankings**');
+  lines.push('```');
+  sortedAlliances.forEach((alliance, index) => {
+    lines.push(`${index + 1}. ${alliance.name} — ${alliance.score} pts (${alliance.regionCount}/8 territories)`);
+  });
+  lines.push('```');
+  lines.push('');
+
+  // Buff Summary
+  lines.push('**✨ Buff Summary**');
+  lines.push('```');
+  const alliancesWithBuffs = sortedAlliances.filter(a => Object.keys(a.buffs).length > 0);
+  if (alliancesWithBuffs.length === 0) {
+    lines.push('No buffs assigned');
+  } else {
+    for (const alliance of alliancesWithBuffs) {
+      const buffEntries = Object.entries(alliance.buffs)
+        .map(([name, value]) => `${name} +${value}%`)
+        .join(', ');
+      lines.push(`${alliance.name}: ${buffEntries}`);
+    }
+  }
+  lines.push('```');
+
+  return lines.join('\n');
+}
+
+// ================================
+
 // Dodajemy typ React.FC
 const AllianceMapManager: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -290,6 +432,75 @@ const AllianceMapManager: React.FC = () => {
   const [showBuffModal, setShowBuffModal] = useState<boolean>(false);
   const [selectedRegionForBuff, setSelectedRegionForBuff] = useState<string | null>(null);
   const [longPressTimer, setLongPressTimer] = useState<number | null>(null);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  
+  // Undo/Redo history state
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [historyPosition, setHistoryPosition] = useState<number>(-1);
+  const canUndo = historyPosition >= 0;
+  const canRedo = historyPosition < history.length - 1;
+
+  // Color Legend: filter alliances that have at least one territory in regionColors
+  const visibleAlliances = alliances.filter(a =>
+    Object.values(regionColors).includes(a.id)
+  );
+
+  // Undo/Redo core functions
+  const pushHistory = useCallback((entry: HistoryEntry) => {
+    setHistory(prev => {
+      // Discard any entries ahead of current position (branch pruning)
+      const truncated = prev.slice(0, historyPosition + 1);
+      const updated = [...truncated, entry];
+      // Enforce max 20 entries by discarding oldest
+      if (updated.length > 20) {
+        return updated.slice(updated.length - 20);
+      }
+      return updated;
+    });
+    setHistoryPosition(prev => {
+      const newPos = Math.min(prev + 1, 19);
+      return newPos;
+    });
+  }, [historyPosition]);
+
+  const undo = useCallback(() => {
+    if (!canUndo) return;
+    const entry = history[historyPosition];
+    // Restore previous state
+    setRegionColors(prev => {
+      if (entry.previousAllianceId === null) {
+        const next = { ...prev };
+        delete next[entry.regionId];
+        return next;
+      }
+      return { ...prev, [entry.regionId]: entry.previousAllianceId };
+    });
+    setHistoryPosition(p => p - 1);
+  }, [canUndo, history, historyPosition]);
+
+  const redo = useCallback(() => {
+    if (!canRedo) return;
+    const entry = history[historyPosition + 1];
+    // Re-apply action
+    setRegionColors(prev => {
+      if (entry.newAllianceId === null) {
+        const next = { ...prev };
+        delete next[entry.regionId];
+        return next;
+      }
+      return { ...prev, [entry.regionId]: entry.newAllianceId };
+    });
+    setHistoryPosition(p => p + 1);
+  }, [canRedo, history, historyPosition]);
+
+  // Pinch-to-zoom state
+  const [mapScale, setMapScale] = useState<number>(1);
+  const [mapTranslate, setMapTranslate] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isPinching, setIsPinching] = useState<boolean>(false);
+  const [lastPinchDist, setLastPinchDist] = useState<number>(0);
+  const [lastTouchCenter, setLastTouchCenter] = useState<{ x: number; y: number } | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   
   // Ref dla elementu SVG
   // const svgRef = useRef<SVGSVGElement>(null);
@@ -438,6 +649,25 @@ const AllianceMapManager: React.FC = () => {
         alert("Wystąpił nieznany błąd podczas eksportowania mapy. Sprawdź konsolę.");
     }
 };
+
+  // === DISCORD EXPORT HANDLER ===
+  const handleCopyForDiscord = useCallback(async () => {
+    try {
+      const message = formatDiscordMessage({
+        alliances,
+        regionColors,
+        regionData: REGION_DATA,
+        permanentBuffs: PERMANENT_BUFFS,
+        availableBuffs: AVAILABLE_BUFFS,
+      });
+      await navigator.clipboard.writeText(message);
+      setCopyStatus('success');
+      setTimeout(() => setCopyStatus('idle'), 2000);
+    } catch (error) {
+      setCopyStatus('error');
+      setTimeout(() => setCopyStatus('idle'), 3000);
+    }
+  }, [alliances, regionColors]);
 
 
   // --- FUNKCJA 1: Obliczanie domyślnych centrów (BBox lub stałe REGION_DATA) ---
@@ -605,6 +835,11 @@ const AllianceMapManager: React.FC = () => {
 
     // Jeśli region już należy do aktywnego sojuszu, usuń go
     if (regionColors[regionId] === activeAllianceId) {
+      pushHistory({
+        regionId,
+        previousAllianceId: activeAllianceId,
+        newAllianceId: null,
+      });
       setRegionColors(prev => {
         const newColors = {...prev};
         delete newColors[regionId];
@@ -618,15 +853,25 @@ const AllianceMapManager: React.FC = () => {
     
     // Limit 8 terytoriów na sojusz
     if (currentCount >= 8) {
-      alert(`❌ Alliance ${alliances.find(a => a.id === activeAllianceId)?.name} reached its maximum limit of 8 territories!`);
+      showToast(`❌ ${alliances.find(a => a.id === activeAllianceId)?.name} reached max 8 territories!`);
       return; // Nie rób nic więcej
     }
     
     // Przypisz terytorium do aktywnego sojuszu
+    pushHistory({
+      regionId,
+      previousAllianceId: regionColors[regionId] ?? null,
+      newAllianceId: activeAllianceId,
+    });
     setRegionColors(prev => ({
       ...prev,
       [regionId]: activeAllianceId
     }));
+    
+    // Haptic feedback on mobile
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
   };
 
   const handlePathHover = (e: React.MouseEvent<SVGPathElement>) => {
@@ -657,6 +902,81 @@ const AllianceMapManager: React.FC = () => {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
+  };
+
+  // Toast notification helper
+  const showToast = useCallback((message: string) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(null), 2500);
+  }, []);
+
+  // Pinch-to-zoom handlers
+  const getTouchDistance = (touches: React.TouchList) => {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const getTouchCenter = (touches: React.TouchList) => ({
+    x: (touches[0].clientX + touches[1].clientX) / 2,
+    y: (touches[0].clientY + touches[1].clientY) / 2,
+  });
+
+  const handleMapTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      setIsPinching(true);
+      setLastPinchDist(getTouchDistance(e.touches));
+      setLastTouchCenter(getTouchCenter(e.touches));
+    }
+  };
+
+  const handleMapTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && isPinching) {
+      e.preventDefault();
+      const newDist = getTouchDistance(e.touches);
+      const newCenter = getTouchCenter(e.touches);
+      
+      // Scale
+      const scaleFactor = newDist / lastPinchDist;
+      const newScale = Math.min(Math.max(mapScale * scaleFactor, 1), 5);
+      
+      // Pan
+      if (lastTouchCenter) {
+        const dx = newCenter.x - lastTouchCenter.x;
+        const dy = newCenter.y - lastTouchCenter.y;
+        setMapTranslate(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+      }
+      
+      setMapScale(newScale);
+      setLastPinchDist(newDist);
+      setLastTouchCenter(newCenter);
+    }
+  };
+
+  const handleMapTouchEnd = (e: React.TouchEvent) => {
+    if (e.touches.length < 2) {
+      setIsPinching(false);
+      setLastPinchDist(0);
+      setLastTouchCenter(null);
+      
+      // Snap back if scale is close to 1
+      if (mapScale < 1.1) {
+        setMapScale(1);
+        setMapTranslate({ x: 0, y: 0 });
+      }
+    }
+  };
+
+  // Double-tap to reset zoom
+  const lastTapRef = useRef<number>(0);
+  const handleMapDoubleTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      setMapScale(1);
+      setMapTranslate({ x: 0, y: 0 });
+    }
+    lastTapRef.current = now;
   };
 
 
@@ -724,6 +1044,13 @@ const allianceScores = calculateAllianceScores();
   
   return (
     <div className="flex h-screen bg-gray-900 text-gray-100 relative">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg shadow-xl text-sm font-medium text-white toast-enter">
+          {toastMessage}
+        </div>
+      )}
+
       {/* Przycisk Menu - Pozycja stała */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -744,7 +1071,7 @@ const allianceScores = calculateAllianceScores();
       <div className="flex-1 flex flex-col bg-gray-800 w-full">
         <div className="p-4 border-b border-gray-700 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-bold">Teritory Map</h2>
+            <h2 className="text-xl font-bold">Territory Map</h2>
             <p className="text-sm text-gray-400">
               {getTotalRegions()} regions assigned
             </p>
@@ -754,21 +1081,105 @@ const allianceScores = calculateAllianceScores();
               Discord: <span className="text-purple-400 font-medium">.arczi.</span>
             </p>
           </div>
+          <div className="hidden md:flex items-center gap-1">
+            <button
+              onClick={undo}
+              disabled={!canUndo}
+              className={`p-2 rounded transition ${
+                canUndo
+                  ? 'hover:bg-gray-700 text-gray-200'
+                  : 'text-gray-600 cursor-not-allowed'
+              }`}
+              aria-label="Undo"
+            >
+              <Undo2 size={18} />
+            </button>
+            <button
+              onClick={redo}
+              disabled={!canRedo}
+              className={`p-2 rounded transition ${
+                canRedo
+                  ? 'hover:bg-gray-700 text-gray-200'
+                  : 'text-gray-600 cursor-not-allowed'
+              }`}
+              aria-label="Redo"
+            >
+              <Redo2 size={18} />
+            </button>
+          </div>
           <div className="text-sm hidden md:block">
             Aktywny: <span className="text-blue-400 font-semibold">
               {alliances.find(a => a.id === activeAllianceId)?.name}
             </span>
           </div>
         </div>
+
+        {/* Active alliance indicator - mobile only */}
+        <div className="md:hidden px-4 py-2 bg-gray-750 border-b border-gray-700 flex items-center gap-2">
+          <span 
+            className="w-3 h-3 rounded-full border border-gray-500"
+            style={{ backgroundColor: alliances.find(a => a.id === activeAllianceId)?.color }}
+          ></span>
+          <span className="text-sm text-gray-300">
+            Active: <span className="font-semibold text-white">{alliances.find(a => a.id === activeAllianceId)?.name}</span>
+          </span>
+          <div className="flex items-center gap-0.5 ml-auto">
+            <button
+              onClick={undo}
+              disabled={!canUndo}
+              className={`p-1.5 rounded transition ${
+                canUndo
+                  ? 'hover:bg-gray-700 text-gray-200'
+                  : 'text-gray-600 cursor-not-allowed'
+              }`}
+              aria-label="Undo"
+            >
+              <Undo2 size={16} />
+            </button>
+            <button
+              onClick={redo}
+              disabled={!canRedo}
+              className={`p-1.5 rounded transition ${
+                canRedo
+                  ? 'hover:bg-gray-700 text-gray-200'
+                  : 'text-gray-600 cursor-not-allowed'
+              }`}
+              aria-label="Redo"
+            >
+              <Redo2 size={16} />
+            </button>
+          </div>
+          <span className="text-xs text-gray-500">
+            {mapScale > 1 ? `${Math.round(mapScale * 100)}%` : 'Pinch to zoom'}
+          </span>
+        </div>
         
-        <div className="flex-1 overflow-auto p-6 flex items-center justify-center bg-gray-850">
-          <div className="relative inline-block" style={{ maxWidth: '100%' }}>
+        <div className="flex-1 overflow-hidden relative p-2 md:p-6 flex items-center justify-center bg-gray-850">
+          <div 
+            ref={mapContainerRef}
+            className="relative inline-block touch-none" 
+            style={{ 
+              maxWidth: '100%',
+              transform: `scale(${mapScale}) translate(${mapTranslate.x / mapScale}px, ${mapTranslate.y / mapScale}px)`,
+              transformOrigin: 'center center',
+              transition: isPinching ? 'none' : 'transform 0.2s ease-out',
+            }}
+            onTouchStart={handleMapTouchStart}
+            onTouchMove={handleMapTouchMove}
+            onTouchEnd={handleMapTouchEnd}
+          >
             <svg 
               ref={svgRef}
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 1116 910"
-              className={`border-2 rounded-lg bg-gray-500 w-full max-h-[75vh] h-auto md:w-[200%] md:relative md:left-1/2 md:-translate-x-1/2 ${isEditingCenters ? 'cursor-crosshair border-red-500' : 'border-gray-100'}`}
-              onClick={isEditingCenters ? handleMapClickInEditMode : undefined} 
+              className={`border-2 rounded-lg bg-gray-500 w-full h-auto md:w-[200%] md:relative md:left-1/2 md:-translate-x-1/2 ${isEditingCenters ? 'cursor-crosshair border-red-500' : 'border-gray-100'}`}
+              onClick={(e) => {
+                if (isEditingCenters) {
+                  handleMapClickInEditMode(e);
+                } else {
+                  handleMapDoubleTap();
+                }
+              }} 
             >
               {REGION_DATA.map(region => {
                 const center = regionCenters[region.id];
@@ -879,11 +1290,26 @@ const allianceScores = calculateAllianceScores();
               <text x="550" y="475" textAnchor="middle" fontSize="35" fontWeight="bold" fill="white">CAP</text>
             </svg>
           </div>
+
+          {/* Color Legend */}
+          {visibleAlliances.length > 0 && (
+            <div className="absolute bottom-4 left-4 bg-gray-900/70 backdrop-blur-sm rounded-lg p-3 pointer-events-none z-10">
+              <div className="space-y-1.5">
+                {visibleAlliances.map(a => (
+                  <div key={a.id} className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-sm border border-white/30" style={{ backgroundColor: a.color }} />
+                    <span className="text-xs text-white/90 font-medium">{a.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="p-3 border-t border-gray-700 bg-gray-850 text-xs text-gray-400">
+        <div className="p-3 border-t border-gray-700 bg-gray-850 text-xs text-gray-300">
           <div className="flex gap-4 justify-center flex-wrap">
-            <span>💡 Click on territory to assign it to the active alliance</span>
+            <span className="md:hidden">📌 Tap territory to assign • Double-tap map to reset zoom</span>
+            <span className="hidden md:inline">💡 Click on territory to assign it to the active alliance</span>
             <span className="hidden md:inline">💡 Click again to remove</span>
             <span className="hidden md:inline">💡 Hover to highlight</span>
             {isEditingCenters && (
@@ -904,10 +1330,10 @@ const allianceScores = calculateAllianceScores();
         <div>
           <h1 className="text-2xl font-bold mb-2">Alliance Map Manager</h1>
           <p className="text-sm text-gray-400">Strategic Map Control</p>
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-gray-400 mt-2">
             © 2025 Created by <span className="text-blue-400 font-semibold">aRczi from #49</span>
           </p>
-          <p className="text-xs text-gray-600 mt-1">
+          <p className="text-xs text-gray-400 mt-1">
             Discord: <span className="text-purple-400 font-medium">.arczi.</span>
           </p>
         </div>
@@ -1010,7 +1436,7 @@ const allianceScores = calculateAllianceScores();
                     />
                     <div className="flex-1">
                       <div className="text-sm text-gray-300">
-                        {getRegionCount(alliance.id)}/8 teritories
+                        {getRegionCount(alliance.id)}/8 territories
                       </div>
                       {getRegionCount(alliance.id) >= 8 && (
                         <div className="text-xs text-green-400 font-semibold mt-1">
@@ -1029,7 +1455,7 @@ const allianceScores = calculateAllianceScores();
             <h3 className="text-sm font-semibold mb-3 text-gray-300">Statistics</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-400">All teritories:</span>
+                <span className="text-gray-400">All territories:</span>
                 <span className="font-semibold">{ALL_REGIONS_COUNT}</span>
               </div>
               <div className="flex justify-between">
@@ -1109,6 +1535,27 @@ const allianceScores = calculateAllianceScores();
               Export as PNG
             </button>
             {/* ============================== */}
+
+            {/* === COPY FOR DISCORD BUTTON === */}
+            <button
+              onClick={handleCopyForDiscord}
+              aria-label="Copy for Discord"
+              className={`w-full p-3 rounded flex items-center justify-center gap-2 transition font-medium ${
+                copyStatus === 'success'
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : copyStatus === 'error'
+                  ? 'bg-red-600 hover:bg-red-700'
+                  : 'bg-indigo-600 hover:bg-indigo-700'
+              }`}
+            >
+              <ClipboardCopy size={18} />
+              {copyStatus === 'success'
+                ? 'Copied! ✓'
+                : copyStatus === 'error'
+                ? 'Copy failed'
+                : 'Copy for Discord'}
+            </button>
+            {/* ============================== */}
             
             <button
               onClick={() => {
@@ -1178,6 +1625,7 @@ const allianceScores = calculateAllianceScores();
           </div>
         </div>
       )}
+
     </div>
   );
 };
