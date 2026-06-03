@@ -32,6 +32,7 @@ export interface FrankyLayoutState {
 type Action =
   | { type: 'ADD_PLAYER'; name: string; level: PlayerLevel }
   | { type: 'REMOVE_PLAYER'; playerId: string }
+  | { type: 'UPDATE_PLAYER'; playerId: string; name: string; level: PlayerLevel }
   | { type: 'PLACE_PLAYER'; playerId: string; position: GridPosition }
   | { type: 'MOVE_PLAYER'; playerId: string; newPosition: GridPosition }
   | { type: 'RETURN_TO_PANEL'; playerId: string }
@@ -126,6 +127,17 @@ function frankyLayoutReducer(
         players: state.players.filter((p) => p.id !== action.playerId),
         placedPlayers: state.placedPlayers.filter(
           (pp) => pp.playerId !== action.playerId
+        ),
+      };
+    }
+
+    case 'UPDATE_PLAYER': {
+      return {
+        ...state,
+        players: state.players.map((p) =>
+          p.id === action.playerId
+            ? { ...p, name: action.name, level: action.level, color: LEVEL_COLORS[action.level] }
+            : p
         ),
       };
     }
@@ -285,6 +297,7 @@ function frankyLayoutReducer(
 export interface FrankyLayoutActions {
   addPlayer: (name: string, level: PlayerLevel) => void;
   removePlayer: (playerId: string) => void;
+  updatePlayer: (playerId: string, name: string, level: PlayerLevel) => void;
   placePlayer: (playerId: string, position: GridPosition) => void;
   movePlayer: (playerId: string, newPosition: GridPosition) => void;
   returnPlayerToPanel: (playerId: string) => void;
@@ -481,6 +494,10 @@ export function useFrankyLayout(): FrankyLayoutState & FrankyLayoutActions {
     dispatch({ type: 'REMOVE_PLAYER', playerId });
   }, []);
 
+  const updatePlayer = useCallback((playerId: string, name: string, level: PlayerLevel) => {
+    dispatch({ type: 'UPDATE_PLAYER', playerId, name, level });
+  }, []);
+
   const placePlayer = useCallback((playerId: string, position: GridPosition) => {
     dispatch({ type: 'PLACE_PLAYER', playerId, position });
   }, []);
@@ -521,6 +538,7 @@ export function useFrankyLayout(): FrankyLayoutState & FrankyLayoutActions {
     ...state,
     addPlayer,
     removePlayer,
+    updatePlayer,
     placePlayer,
     movePlayer,
     returnPlayerToPanel,

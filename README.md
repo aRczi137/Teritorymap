@@ -57,7 +57,8 @@ Dane synchronizowane są przez Firebase Firestore, a aplikacja hostowana na Fire
 - Konfigurowalna siatka (do 40×40 komórek)
 - Blok Franky (4×4) i bloki graczy (3×3) z drag & drop
 - Automatyczne rozmieszczanie graczy wokół Franky'ego
-- Poziomy graczy I2–I10 z kolorowym kodowaniem
+- Poziomy graczy I2–I10 z kolorowym kodowaniem (lista sortowana malejąco wg poziomu)
+- **Edycja graczy inline** — zmiana nazwy i poziomu bezpośrednio na liście (Enter/Escape do zatwierdzenia/anulowania)
 - **Import z obrazu (OCR)** — rozpoznawanie nazw i poziomów graczy ze screenshota (Tesseract.js / Gemini API)
 - Export layoutu jako **PNG** (przycinany do zawartości)
 - Zapis/odczyt layoutu jako **JSON**

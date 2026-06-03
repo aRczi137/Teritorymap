@@ -29,6 +29,7 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
     gridConfig,
     addPlayer,
     removePlayer,
+    updatePlayer,
     placePlayer,
     movePlayer,
     moveFranky,
@@ -84,6 +85,9 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
   const [playerLevelInput, setPlayerLevelInput] = useState<PlayerLevel>('I2');
   const [panelOpen, setPanelOpen] = useState(true);
   const [toolsOpen, setToolsOpen] = useState(true);
+  const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editLevel, setEditLevel] = useState<PlayerLevel>('I2');
 
   const handleAddPlayer = useCallback(() => {
     const name = playerNameInput.trim();
@@ -91,6 +95,24 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
     addPlayer(name, playerLevelInput);
     setPlayerNameInput('');
   }, [playerNameInput, playerLevelInput, addPlayer]);
+
+  const startEditing = useCallback((player: { id: string; name: string; level: PlayerLevel }) => {
+    setEditingPlayerId(player.id);
+    setEditName(player.name);
+    setEditLevel(player.level);
+  }, []);
+
+  const confirmEdit = useCallback(() => {
+    if (!editingPlayerId) return;
+    const name = editName.trim();
+    if (!name) return;
+    updatePlayer(editingPlayerId, name, editLevel);
+    setEditingPlayerId(null);
+  }, [editingPlayerId, editName, editLevel, updatePlayer]);
+
+  const cancelEdit = useCallback(() => {
+    setEditingPlayerId(null);
+  }, []);
 
   /** Place an existing (unplaced) player on the grid near Franky */
   const placePlayerOnGrid = useCallback((playerId: string) => {
@@ -619,8 +641,114 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
               paddingRight: 4,
             }}
           >
-            {players.map((p) => {
+            {[...players].sort((a, b) => {
+              const lvlA = parseInt(a.level.slice(1), 10);
+              const lvlB = parseInt(b.level.slice(1), 10);
+              return lvlB - lvlA;
+            }).map((p) => {
               const isPlaced = placedPlayers.some((pp) => pp.playerId === p.id);
+              const isEditing = editingPlayerId === p.id;
+
+              if (isEditing) {
+                return (
+                  <div
+                    key={p.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '4px 6px',
+                      borderRadius: 5,
+                      background: 'rgba(59,130,246,0.1)',
+                      border: '1px solid rgba(59,130,246,0.3)',
+                    }}
+                  >
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') confirmEdit(); if (e.key === 'Escape') cancelEdit(); }}
+                      maxLength={20}
+                      autoFocus
+                      style={{
+                        flex: 1,
+                        padding: '2px 5px',
+                        borderRadius: 4,
+                        border: '1px solid #3a3a5a',
+                        background: '#1a1a2e',
+                        color: '#e0e0f0',
+                        fontSize: 11,
+                        outline: 'none',
+                        minWidth: 0,
+                      }}
+                    />
+                    <select
+                      value={editLevel}
+                      onChange={(e) => setEditLevel(e.target.value as PlayerLevel)}
+                      style={{
+                        padding: '2px 4px',
+                        borderRadius: 4,
+                        border: '1px solid #3a3a5a',
+                        background: '#1a1a2e',
+                        color: LEVEL_COLORS[editLevel],
+                        fontSize: 10,
+                        fontWeight: 700,
+                        outline: 'none',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {PLAYER_LEVELS.map((lvl) => (
+                        <option key={lvl} value={lvl} style={{ color: LEVEL_COLORS[lvl] }}>
+                          {lvl}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={confirmEdit}
+                      title="Save"
+                      style={{
+                        width: 16,
+                        height: 16,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#22c55e',
+                        fontSize: 13,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                        padding: 0,
+                      }}
+                    >
+                      ✓
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelEdit}
+                      title="Cancel"
+                      style={{
+                        width: 16,
+                        height: 16,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#ef4444',
+                        fontSize: 12,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                        padding: 0,
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                );
+              }
+
               return (
                 <div
                   key={p.id}
@@ -641,6 +769,32 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
                   <span style={{ color: p.color, fontSize: 10, fontWeight: 700, flexShrink: 0 }}>
                     {p.level}
                   </span>
+                  {/* Edit button */}
+                  <button
+                    type="button"
+                    onClick={() => startEditing(p)}
+                    title="Edit player"
+                    style={{
+                      width: 16,
+                      height: 16,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: 'transparent',
+                      border: 'none',
+                      borderRadius: 3,
+                      color: '#666',
+                      fontSize: 10,
+                      lineHeight: 1,
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      padding: 0,
+                    }}
+                    onMouseEnter={(e) => { (e.target as HTMLElement).style.color = '#3b82f6'; }}
+                    onMouseLeave={(e) => { (e.target as HTMLElement).style.color = '#666'; }}
+                  >
+                    ✎
+                  </button>
                   {/* Place on grid button — only visible when not placed */}
                   {!isPlaced && (
                     <button
