@@ -1,314 +1,289 @@
 # 🗺️ Alliance Map Manager
 
-**Interactive Territory Control System for Strategic Gaming**
+**Interaktywny system zarządzania terytoriami i eventami dla Dark War Survival**
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
-![React](https://img.shields.io/badge/React-18.x-61DAFB.svg)
+![React](https://img.shields.io/badge/React-19-61DAFB.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6.svg)
+![Firebase](https://img.shields.io/badge/Firebase-Firestore-FFCA28.svg)
 
 ---
 
-## 📋 Table of Contents
+## 📋 Spis treści
 
-- [Overview](#overview)
-- [Features](#features)
-- [Demo](#demo)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Technical Details](#technical-details)
-- [Data Persistence](#data-persistence)
-- [Contributing](#contributing)
-- [Author](#author)
-- [License](#license)
-
----
-
-## 🎯 Overview
-
-**Alliance Map Manager** is a web-based interactive map tool designed for strategic territory management in Dark War Survival game. It allows players to visualize, assign, and track territorial control across alliances with a maximum of **8 territories per alliance**.
-
-### Key Highlights
-- ✅ **87 unique territories** with level-based strategic value (LVL 1-6)
-- ✅ **Persistent user data** - your map saves automatically
-- ✅ **8 territory limit** per alliance (enforced)
-- ✅ **PNG export** for sharing and documentation
-- ✅ **Responsive design** - works on desktop and mobile
-- ✅ **Real-time statistics** and visual feedback
+- [Przegląd](#przegląd)
+- [Funkcjonalności](#funkcjonalności)
+- [Screenshot](#screenshot)
+- [Stos technologiczny](#stos-technologiczny)
+- [Instalacja](#instalacja)
+- [Uruchomienie](#uruchomienie)
+- [Struktura projektu](#struktura-projektu)
+- [Przechowywanie danych](#przechowywanie-danych)
+- [Testy](#testy)
+- [Deployment](#deployment)
+- [Autor](#autor)
+- [Licencja](#licencja)
 
 ---
 
-## ✨ Features
+## 🎯 Przegląd
 
-### 🎨 **Alliance Management**
-- Create unlimited custom alliances
-- Assign unique colors to each alliance
-- Rename alliances on-the-fly
-- Delete alliances (territories auto-release)
+**Alliance Map Manager** to webowa aplikacja do zarządzania terytoriami sojuszy w grze Dark War Survival. Składa się z dwóch głównych modułów dostępnych jako zakładki:
 
-### 🗺️ **Interactive Map**
-- Click territories to assign them to active alliance
-- Visual hover effects with territory numbers
-- Color-coded regions by alliance ownership
-- Territory level indicators (1-6)
+1. **Mapa Terytoriów** — interaktywna mapa SVG z 87 terytoriami, przypisywanymi do sojuszy z limitem 8 na sojusz.
+2. **Frankenstein Event** — planer layoutu eventu Frankenstein z siatką, drag & drop i automatycznym rozmieszczaniem graczy.
 
-### 📊 **Statistics & Tracking**
-- Real-time territory count per alliance
-- Display format: `X/8 territories`
-- "LIMIT REACHED" indicator when alliance is full
-- Total assigned/free territories overview
-
-### 💾 **Data Management**
-- **Auto-save to localStorage** - changes persist across sessions
-- **PNG Export** - download your map as an image
-- **Reset function** - clear all territories instantly
-- Each user has their own independent map
-
-### 🎨 **Developer Features** (Debug Mode)
-- Manual territory number positioning
-- Visual editing with crosshair cursor
-- Golden markers for custom positions
+Dane synchronizowane są przez Firebase Firestore, a aplikacja hostowana na Firebase Hosting.
 
 ---
 
-## 🚀 Demo
+## ✨ Funkcjonalności
 
-### Screenshot
+### 🗺️ Zakładka: Mapa Terytoriów
+
+- **87 unikalnych terytoriów** z poziomami (LVL 1–6) i przypisanymi buffami
+- Kliknięcie na terytorium przypisuje je do aktywnego sojuszu
+- Limit **8 terytoriów na sojusz** (z wizualnym ostrzeżeniem)
+- Tworzenie, edycja nazwy, zmiana koloru i usuwanie sojuszy
+- Undo / Redo operacji na terytoriach
+- Export mapy jako **PNG**
+- Kopiowanie konfiguracji do schowka
+- Tryb deweloperski z ręcznym pozycjonowaniem numerów terytoriów
+- Responsywny panel boczny (zwijany na mobile)
+
+### ⚡ Zakładka: Frankenstein Event
+
+- Konfigurowalna siatka (do 40×40 komórek)
+- Blok Franky (4×4) i bloki graczy (3×3) z drag & drop
+- Automatyczne rozmieszczanie graczy wokół Franky'ego
+- Poziomy graczy I2–I10 z kolorowym kodowaniem
+- **Import z obrazu (OCR)** — rozpoznawanie nazw i poziomów graczy ze screenshota (Tesseract.js / Gemini API)
+- Export layoutu jako **PNG** (przycinany do zawartości)
+- Zapis/odczyt layoutu jako **JSON**
+- Nawigacja: zoom (scroll) + pan (drag) + centrowanie kamery
+- Dane zapisywane w Firebase Firestore w czasie rzeczywistym
+
+### 💾 Wspólne
+
+- Automatyczny zapis do **Firebase Firestore**
+- Fallback na **localStorage** gdy brak połączenia
+- Responsywny design (desktop + mobile)
+
+---
+
+## 🚀 Screenshot
+
 ![alt text](image.png)
 
 ---
 
-## 📦 Installation
+## 🔧 Stos technologiczny
 
-### Prerequisites
-- Node.js (v16 or higher)
-- npm or yarn
-
-### Steps
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/alliance-map-manager.git
-   cd alliance-map-manager
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
-
-3. **Start development server**
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   ```
-
-4. **Open in browser**
-   ```
-   http://localhost:5173
-   ```
+| Technologia | Wersja | Zastosowanie |
+|---|---|---|
+| React | 19 | Framework UI |
+| TypeScript | 5.x | Typowanie statyczne |
+| Vite | 6.x | Bundler i dev server |
+| Tailwind CSS | 3.4 | Stylowanie |
+| Firebase | 12.x | Firestore (baza danych) + Hosting |
+| Tesseract.js | 5.x | OCR — rozpoznawanie tekstu z obrazów |
+| Lucide React | 0.546 | Ikony |
+| Vitest | 4.x | Testy jednostkowe |
+| dom-to-image | 2.6 | Export elementów DOM jako obrazy |
 
 ---
 
-## 🎮 Usage
+## 📦 Instalacja
 
-### Basic Workflow
+### Wymagania
 
-1. **Select an Alliance**
-   - Click on any alliance card in the right sidebar to make it active
-   - The active alliance is highlighted with a blue border
+- Node.js v18+
+- npm, yarn lub pnpm
 
-2. **Assign Territories**
-   - Click on any gray (unassigned) territory on the map
-   - The territory will be assigned to your active alliance
-   - Click again to unassign
+### Kroki
 
-3. **Manage Alliances**
-   - Add new alliance: Click `+ Add alliance`
-   - Rename: Click on alliance name and type
-   - Change color: Click color picker
-   - Delete: Click trash icon (⚠️ releases all territories)
+```bash
+# Klonowanie repozytorium
+git clone https://github.com/aRczi137/Teritorymap.git
+cd Teritorymap
 
-4. **Export Your Map**
-   - Click `Export as PNG` to download the current map state
-   - Share with your team or save for records
-
-5. **Reset Map**
-   - Click `Resetuj Mapę` to clear all territory assignments
-   - Alliances remain, only territories are cleared
-
-### Territory Limits
-
-- Each alliance can control **maximum 8 territories**
-- Attempting to exceed limit shows an alert
-- You must unassign a territory before assigning a new one
+# Instalacja zależności
+npm install
+```
 
 ---
 
-## 🔧 Technical Details
+## ▶️ Uruchomienie
 
-### Tech Stack
+```bash
+# Development server (http://localhost:5173)
+npm run dev
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| React | 18.x | UI framework |
-| TypeScript | 5.x | Type safety |
-| Tailwind CSS | 3.x | Styling |
-| Lucide React | - | Icons |
-| Vite | - | Build tool |
+# Build produkcyjny
+npm run build
 
-### Project Structure
+# Podgląd builda
+npm run preview
+
+# Linting
+npm run lint
+
+# Testy
+npm run test
+```
+
+---
+
+## 📂 Struktura projektu
 
 ```
-alliance-map-manager/
+Teritorymap/
 ├── src/
-│   ├── AllianceMapManager.tsx  # Main component
-│   ├── App.tsx                 # Entry point
-│   ├── main.tsx                # React DOM root
-│   └── index.css               # Global styles
-├── public/                     # Static assets
-├── package.json                # Dependencies
-└── README.md                   # Documentation
+│   ├── App.tsx                         # Punkt wejścia (renderuje AllianceMapManager)
+│   ├── AllianceMapManager.tsx          # Główny komponent — mapa terytoriów + tabs
+│   ├── firebaseConfig.ts              # Konfiguracja Firebase / Firestore
+│   ├── main.tsx                        # React DOM root
+│   ├── index.css                       # Style globalne + Tailwind
+│   └── frankenstein/                   # Moduł eventu Frankenstein
+│       ├── FrankensteinEventTab.tsx    # Główny komponent zakładki
+│       ├── GridCanvas.tsx             # Canvas siatki z zoom/pan
+│       ├── FrankyBlock.tsx            # Blok Franky'ego (4×4)
+│       ├── PlayerBlock.tsx            # Blok gracza (3×3)
+│       ├── PlayerListPanel.tsx        # Panel listy graczy
+│       ├── AvailablePanel.tsx         # Panel dostępnych graczy
+│       ├── ControlsBar.tsx            # Pasek narzędzi
+│       ├── ResetModal.tsx             # Modal potwierdzenia resetu
+│       ├── OcrPreviewModal.tsx        # Modal podglądu wyników OCR
+│       ├── ocrImport.ts              # Logika importu OCR (Tesseract + Gemini)
+│       ├── useFrankyLayout.ts         # Hook stanu layoutu + Firestore sync
+│       ├── types.ts                   # Typy i stałe
+│       ├── gridUtils.ts              # Narzędzia do obliczeń na siatce
+│       ├── displayUtils.ts           # Narzędzia wyświetlania
+│       ├── exportUtils.ts            # Generowanie nazw plików exportu
+│       ├── validation.ts             # Walidacja danych
+│       └── __tests__/                # Testy jednostkowe modułu
+│           ├── displayUtils.test.ts
+│           ├── exportUtils.test.ts
+│           ├── gridUtils.test.ts
+│           ├── useFrankyLayout.test.ts
+│           └── validation.test.ts
+├── public/                            # Assety statyczne
+├── firebase.json                      # Konfiguracja Firebase Hosting + Firestore
+├── firestore.rules                    # Reguły bezpieczeństwa Firestore
+├── firestore.indexes.json             # Indeksy Firestore
+├── vite.config.ts                     # Konfiguracja Vite
+├── tailwind.config.js                 # Konfiguracja Tailwind
+├── tsconfig.json                      # Konfiguracja TypeScript
+└── package.json                       # Zależności i skrypty
 ```
-
-### Key Components
-
-**AllianceMapManager.tsx** - Main React component containing:
-- Alliance state management
-- Region color mapping (87 territories)
-- SVG map rendering with path elements
-- localStorage integration
-- Export functionality
 
 ---
 
-## 💾 Data Persistence
+## 💾 Przechowywanie danych
 
-### How It Works
+### Firebase Firestore
 
-The app uses **localStorage** for client-side data persistence:
+Aplikacja zapisuje dane w Firestore w czasie rzeczywistym:
 
-```typescript
-// Auto-saves every 500ms after changes (debounced)
-localStorage.setItem('allianceMapData', JSON.stringify({
-  alliances,
-  regionColors,
-  activeAllianceId,
-  manualCenterOverrides
-}));
-```
+- **Mapa terytoriów** — sojusze, przypisania regionów, nadpisania pozycji
+- **Frankenstein layout** — konfiguracja siatki, gracze, pozycje bloków, timestamp
 
-### Data Structure
+Dane synchronizowane są automatycznie z debounce'em, aby uniknąć nadmiernych zapisów.
+
+### localStorage (fallback)
+
+Gdy Firestore jest niedostępny, dane przechowywane są lokalnie w przeglądarce pod kluczem `allianceMapData`.
+
+### Struktura danych mapy
 
 ```json
 {
   "alliances": [
     { "id": 1, "name": "KNS", "color": "#e67e22" }
   ],
-  "regionColors": {
-    "r1": 1,
-    "r2": 2
-  },
+  "regionColors": { "r1": 1, "r2": 2 },
   "activeAllianceId": 1,
   "manualCenterOverrides": {}
 }
 ```
 
-### Clearing Data
+### Struktura danych Frankenstein
 
-Users can clear their data by:
-1. Clicking "Resetuj Mapę" (resets territories only)
-2. Browser developer tools: `localStorage.clear()`
-3. Browser settings: Clear site data
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Here's how you can help:
-
-### Reporting Issues
-- Use GitHub Issues
-- Include steps to reproduce
-- Add screenshots if applicable
-
-### Pull Requests
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
-
-### Development Guidelines
-- Follow existing code style
-- Add TypeScript types for new features
-- Test on both desktop and mobile
-- Update README if adding major features
+```json
+{
+  "gridConfig": { "cols": 30, "rows": 30 },
+  "players": [
+    { "id": "uuid", "name": "Gracz1", "level": "I8", "color": "#a855f7" }
+  ],
+  "placedPlayers": [
+    { "playerId": "uuid", "position": { "col": 5, "row": 3 } }
+  ],
+  "frankyPosition": { "col": 13, "row": 13 },
+  "updatedAt": "<Firestore Timestamp>"
+}
+```
 
 ---
 
-## 👤 Author
+## 🧪 Testy
+
+Projekt używa **Vitest** z **Testing Library** i **fast-check** (property-based testing).
+
+```bash
+npm run test
+```
+
+Testy pokrywają moduł Frankenstein:
+- `gridUtils.test.ts` — obliczenia kolizji i pozycji na siatce
+- `displayUtils.test.ts` — formatowanie wyświetlania
+- `exportUtils.test.ts` — generowanie nazw plików
+- `validation.test.ts` — walidacja danych wejściowych
+- `useFrankyLayout.test.ts` — logika hooka stanu
+
+---
+
+## 🚀 Deployment
+
+Aplikacja deployowana jest na **Firebase Hosting**.
+
+```bash
+# Build + deploy
+npm run build
+firebase deploy --only hosting
+```
+
+Hosting serwuje pliki z katalogu `dist/` z SPA rewrite (wszystkie ścieżki → `index.html`).
+
+Adres produkcyjny: `https://teritory-map-s49.web.app`
+
+---
+
+## 👤 Autor
 
 **aRczi S49**
 
 - Discord: `.arczi.`
 - GitHub: [@aRczi137](https://github.com/aRczi137)
 
-### Credits
-- Map data based on strategic gaming territory system
-- Inspired by alliance management tools in multiplayer strategy games
+---
+
+## 📄 Licencja
+
+MIT License — szczegóły w pliku [LICENSE](LICENSE).
 
 ---
 
-## 📄 License
+## 📞 Wsparcie
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
-```
-MIT License
-
-Copyright (c) 2025 aRczi S49
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-```
-
----
-
-## 🌟 Acknowledgments
-
-- Built with ❤️ for gaming communities
-- Thanks to all beta testers and contributors
-- Special thanks to strategy game enthusiasts
-
----
-
-## 📞 Support
-
-Having issues or questions?
-
-- 💬 **Discord**: Contact `.arczi.`
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/aRczi137/Teritorymap/issues)
+- 💬 **Discord**: `.arczi.`
+- 🐛 **Zgłoszenia błędów**: [GitHub Issues](https://github.com/aRczi137/Teritorymap/issues)
 
 ---
 
 <div align="center">
 
-**⭐ Star this repo if you find it useful! ⭐**
+**⭐ Daj gwiazdkę jeśli projekt Ci się przydał! ⭐**
 
 Made with 🗺️ by aRczi
 
