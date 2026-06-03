@@ -1100,14 +1100,12 @@ const allianceScores = calculateAllianceScores();
           </div>
 
           <div className="text-sm hidden md:block">
-            {activeTab === 'map' ? (
+            {activeTab === 'map' && (
               <>
                 Aktywny: <span className="text-blue-400 font-semibold">
                   {alliances.find(a => a.id === activeAllianceId)?.name}
                 </span>
               </>
-            ) : (
-              <span className="text-gray-400">Configure & export layout</span>
             )}
           </div>
         </div>
