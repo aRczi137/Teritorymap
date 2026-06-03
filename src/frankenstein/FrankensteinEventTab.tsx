@@ -7,6 +7,7 @@ import { ResetModal } from './ResetModal';
 import { buildExportFilename } from './exportUtils';
 import { runOcrOnImage, type ParsedPlayer } from './ocrImport';
 import { OcrPreviewModal } from './OcrPreviewModal';
+import { trackOcrImport, trackPlayerAdd, trackHiveExport } from '../analytics';
 
 /** Base cell size used by GridCanvas (must match) */
 const CELL_SIZE = 40;
@@ -93,6 +94,7 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
     const name = playerNameInput.trim();
     if (!name) return;
     addPlayer(name, playerLevelInput);
+    trackPlayerAdd('manual');
     setPlayerNameInput('');
   }, [playerNameInput, playerLevelInput, addPlayer]);
 
@@ -164,6 +166,7 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
   const [ocrResult, setOcrResult] = useState<{ suggestions: ParsedPlayer[]; rawText: string } | null>(null);
 
   const handleImportFromImage = useCallback(() => {
+    trackOcrImport();
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
@@ -192,6 +195,7 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
     for (const p of players) {
       addPlayer(p.name, p.level);
     }
+    trackPlayerAdd('ocr');
     setOcrResult(null);
   }, [addPlayer]);
 
@@ -242,6 +246,7 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
   const exportRef = useRef<HTMLDivElement>(null);
 
   const exportAsImage = useCallback(() => {
+    trackHiveExport();
     const EXPORT_CELL = 30;
     const PADDING = 3; // cells of padding around content
 

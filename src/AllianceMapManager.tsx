@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Plus, Trash2, RotateCcw, Menu, X, Settings, Download, ClipboardCopy, Undo2, Redo2 } from 'lucide-react';
 import { FrankensteinEventTab } from './frankenstein/FrankensteinEventTab';
+import { trackTabSwitch, trackMapExport } from './analytics';
 
 /* === NOWE IMPORTY FIREBASE (Zakładamy, że masz już utworzony plik src/firebaseConfig.ts) ===
 import { db } from './firebaseConfig'; 
@@ -579,6 +580,7 @@ const AllianceMapManager: React.FC = () => {
   };
   
   const exportMapToPNG = async () => {
+    trackMapExport();
     const svgElement = svgRef.current;
     
     if (!svgElement) {
@@ -1076,7 +1078,7 @@ const allianceScores = calculateAllianceScores();
         <div className="p-4 border-b border-gray-700 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setActiveTab('map')}
+              onClick={() => { setActiveTab('map'); trackTabSwitch('map'); }}
               className={`px-3 py-2 rounded transition text-sm font-semibold ${
                 activeTab === 'map'
                   ? 'bg-gray-700 text-white border border-gray-600'
@@ -1087,7 +1089,7 @@ const allianceScores = calculateAllianceScores();
               🗺️ Territory Map
             </button>
             <button
-              onClick={() => setActiveTab('frankenstein')}
+              onClick={() => { setActiveTab('frankenstein'); trackTabSwitch('hive_builder'); }}
               className={`px-3 py-2 rounded transition text-sm font-semibold ${
                 activeTab === 'frankenstein'
                   ? 'bg-gray-700 text-white border border-gray-600'
