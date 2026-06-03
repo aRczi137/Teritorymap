@@ -1,5 +1,5 @@
 {
-  "enabled": true,
+  "enabled": false,
   "name": "Update Docs on Source Change",
   "description": "When source files (TypeScript, TSX, CSS, or config files) are edited, asks the agent to update the README or relevant documentation to reflect the changes.",
   "version": "1",

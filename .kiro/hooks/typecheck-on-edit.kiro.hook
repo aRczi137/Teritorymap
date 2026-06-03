@@ -1,0 +1,13 @@
+{
+  "name": "TypeScript Check on Edit",
+  "version": "1.0.0",
+  "description": "Runs TypeScript type checking when .ts or .tsx files are edited to catch type errors early.",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["*.ts", "*.tsx"]
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "npx tsc --noEmit --pretty"
+  }
+}

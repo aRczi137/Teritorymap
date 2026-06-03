@@ -1,0 +1,13 @@
+{
+  "name": "Console.log Check",
+  "version": "1.0.0",
+  "description": "Checks for leftover console.log statements after editing source files. Warns before they reach production.",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["*.ts", "*.tsx"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check the edited file for console.log, console.warn, or console.error statements. If any are found, ask whether they are intentional (debugging aid) or should be removed before deploy. List each occurrence with its line number."
+  }
+}

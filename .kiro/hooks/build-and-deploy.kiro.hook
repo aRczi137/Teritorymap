@@ -1,0 +1,12 @@
+{
+  "name": "Build & Deploy to Firebase",
+  "version": "1.0.0",
+  "description": "Builds the project and deploys to Firebase Hosting. Click to trigger manually when ready to ship.",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "npm run build && firebase deploy --only hosting"
+  }
+}
