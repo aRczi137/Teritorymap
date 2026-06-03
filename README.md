@@ -32,7 +32,7 @@
 **Alliance Map Manager** to webowa aplikacja do zarządzania terytoriami sojuszy w grze Dark War Survival. Składa się z dwóch głównych modułów dostępnych jako zakładki:
 
 1. **Mapa Terytoriów** — interaktywna mapa SVG z 87 terytoriami, przypisywanymi do sojuszy z limitem 8 na sojusz.
-2. **Frankenstein Event** — planer layoutu eventu Frankenstein z siatką, drag & drop i automatycznym rozmieszczaniem graczy.
+2. **Hive Builder** — planer layoutu Hive z siatką, drag & drop i automatycznym rozmieszczaniem graczy.
 
 Dane synchronizowane są przez Firebase Firestore, a aplikacja hostowana na Firebase Hosting.
 
@@ -52,11 +52,11 @@ Dane synchronizowane są przez Firebase Firestore, a aplikacja hostowana na Fire
 - Tryb deweloperski z ręcznym pozycjonowaniem numerów terytoriów
 - Responsywny panel boczny (zwijany na mobile)
 
-### ⚡ Zakładka: Frankenstein Event
+### ⚡ Zakładka: Hive Builder
 
 - Konfigurowalna siatka (do 40×40 komórek)
-- Blok Franky (4×4) i bloki graczy (3×3) z drag & drop
-- Automatyczne rozmieszczanie graczy wokół Franky'ego
+- Blok Hive (4×4) i bloki graczy (3×3) z drag & drop
+- Automatyczne rozmieszczanie graczy wokół Hive
 - Poziomy graczy I2–I10 z kolorowym kodowaniem (lista sortowana malejąco wg poziomu)
 - **Edycja graczy inline** — zmiana nazwy i poziomu bezpośrednio na liście (Enter/Escape do zatwierdzenia/anulowania)
 - **Import z obrazu (OCR)** — rozpoznawanie nazw i poziomów graczy ze screenshota (Tesseract.js / Gemini API)
@@ -73,9 +73,19 @@ Dane synchronizowane są przez Firebase Firestore, a aplikacja hostowana na Fire
 
 ---
 
-## 🚀 Screenshot
+## 🚀 Screenshots
 
-![alt text](image.png)
+### Mapa Terytoriów
+![Territory Map — overview](screnshots/Screenshot%202026-06-03%20134442.png)
+![Territory Map — alliances with buffs](screnshots/Screenshot%202026-06-03%20134519.png)
+
+### Hive Builder
+![Hive Builder — grid view](screnshots/Screenshot%202026-06-03%20134534.png)
+![Hive Builder — players placed](screnshots/Screenshot%202026-06-03%20134553.png)
+
+### OCR Import & Export
+![OCR import preview](screnshots/Screenshot%202026-06-03%20134614.png)
+![Exported layout PNG](screnshots/Screenshot%202026-06-03%20134640.png)
 
 ---
 
