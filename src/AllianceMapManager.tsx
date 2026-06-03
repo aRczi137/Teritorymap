@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Plus, Trash2, RotateCcw, Menu, X, Settings, Download, ClipboardCopy, Undo2, Redo2 } from 'lucide-react';
+import { FrankensteinEventTab } from './frankenstein/FrankensteinEventTab';
 
 /* === NOWE IMPORTY FIREBASE (Zakładamy, że masz już utworzony plik src/firebaseConfig.ts) ===
 import { db } from './firebaseConfig'; 
@@ -405,9 +406,11 @@ export function formatDiscordMessage(params: FormatDiscordMessageParams): string
 
 // ================================
 
-// Dodajemy typ React.FC
+ // Dodajemy typ React.FC
 const AllianceMapManager: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
+
+  const [activeTab, setActiveTab] = useState<'map' | 'frankenstein'>('map');
   // === TYPOWANIE STANÓW ===
   const [alliances, setAlliances] = useState<Alliance[]>([
     { id: 1, name: 'KNS', color: '#e67e22' },
@@ -1067,511 +1070,571 @@ const allianceScores = calculateAllianceScores();
       ></div>
 
 
-      {/* Obszar Mapy - Pełny ekran */}
+      {/* Obszar główny: Tabs (mapa + FrankensteinEvent) */}
       <div className="flex-1 flex flex-col bg-gray-800 w-full">
-        <div className="p-4 border-b border-gray-700 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold">Territory Map</h2>
-            <p className="text-sm text-gray-400">
-              {getTotalRegions()} regions assigned
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Created by <span className="text-blue-400 font-semibold">aRczi from #49</span>
-              <span className="text-gray-600 mx-1">•</span>
-              Discord: <span className="text-purple-400 font-medium">.arczi.</span>
-            </p>
-          </div>
-          <div className="hidden md:flex items-center gap-1">
+        {/* Tab header */}
+        <div className="p-4 border-b border-gray-700 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
             <button
-              onClick={undo}
-              disabled={!canUndo}
-              className={`p-2 rounded transition ${
-                canUndo
-                  ? 'hover:bg-gray-700 text-gray-200'
-                  : 'text-gray-600 cursor-not-allowed'
+              onClick={() => setActiveTab('map')}
+              className={`px-3 py-2 rounded transition text-sm font-semibold ${
+                activeTab === 'map'
+                  ? 'bg-gray-700 text-white border border-gray-600'
+                  : 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700'
               }`}
-              aria-label="Undo"
+              aria-label="Territory Map tab"
             >
-              <Undo2 size={18} />
+              🗺️ Territory Map
             </button>
             <button
-              onClick={redo}
-              disabled={!canRedo}
-              className={`p-2 rounded transition ${
-                canRedo
-                  ? 'hover:bg-gray-700 text-gray-200'
-                  : 'text-gray-600 cursor-not-allowed'
+              onClick={() => setActiveTab('frankenstein')}
+              className={`px-3 py-2 rounded transition text-sm font-semibold ${
+                activeTab === 'frankenstein'
+                  ? 'bg-gray-700 text-white border border-gray-600'
+                  : 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700'
               }`}
-              aria-label="Redo"
+              aria-label="Hive Builder tab"
             >
-              <Redo2 size={18} />
+              🐝 Hive Builder
             </button>
           </div>
+
           <div className="text-sm hidden md:block">
-            Aktywny: <span className="text-blue-400 font-semibold">
-              {alliances.find(a => a.id === activeAllianceId)?.name}
+            {activeTab === 'map' ? (
+              <>
+                Aktywny: <span className="text-blue-400 font-semibold">
+                  {alliances.find(a => a.id === activeAllianceId)?.name}
+                </span>
+              </>
+            ) : (
+              <span className="text-gray-400">Configure & export layout</span>
+            )}
+          </div>
+        </div>
+
+        {/* Map view (mounted, but hidden via CSS to preserve state) */}
+        <div style={{ display: activeTab === 'map' ? 'flex' : 'none' }} className="flex-1 flex flex-col bg-gray-800 w-full">
+          <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold">Territory Map</h2>
+              <p className="text-sm text-gray-400">
+                {getTotalRegions()} regions assigned
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Created by <span className="text-blue-400 font-semibold">aRczi from #49</span>
+                <span className="text-gray-600 mx-1">•</span>
+                Discord: <span className="text-purple-400 font-medium">.arczi.</span>
+              </p>
+            </div>
+            <div className="hidden md:flex items-center gap-1">
+              <button
+                onClick={undo}
+                disabled={!canUndo}
+                className={`p-2 rounded transition ${
+                  canUndo
+                    ? 'hover:bg-gray-700 text-gray-200'
+                    : 'text-gray-600 cursor-not-allowed'
+                }`}
+                aria-label="Undo"
+              >
+                <Undo2 size={18} />
+              </button>
+              <button
+                onClick={redo}
+                disabled={!canRedo}
+                className={`p-2 rounded transition ${
+                  canRedo
+                    ? 'hover:bg-gray-700 text-gray-200'
+                    : 'text-gray-600 cursor-not-allowed'
+                }`}
+                aria-label="Redo"
+              >
+                <Redo2 size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* Active alliance indicator - mobile only */}
+          <div className="md:hidden px-4 py-2 bg-gray-750 border-b border-gray-700 flex items-center gap-2">
+            <span 
+              className="w-3 h-3 rounded-full border border-gray-500"
+              style={{ backgroundColor: alliances.find(a => a.id === activeAllianceId)?.color }}
+            ></span>
+            <span className="text-sm text-gray-300">
+              Active: <span className="font-semibold text-white">{alliances.find(a => a.id === activeAllianceId)?.name}</span>
+            </span>
+            <div className="flex items-center gap-0.5 ml-auto">
+              <button
+                onClick={undo}
+                disabled={!canUndo}
+                className={`p-1.5 rounded transition ${
+                  canUndo
+                    ? 'hover:bg-gray-700 text-gray-200'
+                    : 'text-gray-600 cursor-not-allowed'
+                }`}
+                aria-label="Undo"
+              >
+                <Undo2 size={16} />
+              </button>
+              <button
+                onClick={redo}
+                disabled={!canRedo}
+                className={`p-1.5 rounded transition ${
+                  canRedo
+                    ? 'hover:bg-gray-700 text-gray-200'
+                    : 'text-gray-600 cursor-not-allowed'
+                }`}
+                aria-label="Redo"
+              >
+                <Redo2 size={16} />
+              </button>
+            </div>
+            <span className="text-xs text-gray-500">
+              {mapScale > 1 ? `${Math.round(mapScale * 100)}%` : 'Pinch to zoom'}
             </span>
           </div>
-        </div>
 
-        {/* Active alliance indicator - mobile only */}
-        <div className="md:hidden px-4 py-2 bg-gray-750 border-b border-gray-700 flex items-center gap-2">
-          <span 
-            className="w-3 h-3 rounded-full border border-gray-500"
-            style={{ backgroundColor: alliances.find(a => a.id === activeAllianceId)?.color }}
-          ></span>
-          <span className="text-sm text-gray-300">
-            Active: <span className="font-semibold text-white">{alliances.find(a => a.id === activeAllianceId)?.name}</span>
-          </span>
-          <div className="flex items-center gap-0.5 ml-auto">
-            <button
-              onClick={undo}
-              disabled={!canUndo}
-              className={`p-1.5 rounded transition ${
-                canUndo
-                  ? 'hover:bg-gray-700 text-gray-200'
-                  : 'text-gray-600 cursor-not-allowed'
-              }`}
-              aria-label="Undo"
+          <div className="flex-1 overflow-hidden relative p-2 md:p-6 flex items-center justify-center bg-gray-850">
+            <div 
+              ref={mapContainerRef}
+              className="relative inline-block touch-none" 
+              style={{ 
+                maxWidth: '100%',
+                transform: `scale(${mapScale}) translate(${mapTranslate.x / mapScale}px, ${mapTranslate.y / mapScale}px)`,
+                transformOrigin: 'center center',
+                transition: isPinching ? 'none' : 'transform 0.2s ease-out',
+              }}
+              onTouchStart={handleMapTouchStart}
+              onTouchMove={handleMapTouchMove}
+              onTouchEnd={handleMapTouchEnd}
             >
-              <Undo2 size={16} />
-            </button>
-            <button
-              onClick={redo}
-              disabled={!canRedo}
-              className={`p-1.5 rounded transition ${
-                canRedo
-                  ? 'hover:bg-gray-700 text-gray-200'
-                  : 'text-gray-600 cursor-not-allowed'
-              }`}
-              aria-label="Redo"
-            >
-              <Redo2 size={16} />
-            </button>
-          </div>
-          <span className="text-xs text-gray-500">
-            {mapScale > 1 ? `${Math.round(mapScale * 100)}%` : 'Pinch to zoom'}
-          </span>
-        </div>
-        
-        <div className="flex-1 overflow-hidden relative p-2 md:p-6 flex items-center justify-center bg-gray-850">
-          <div 
-            ref={mapContainerRef}
-            className="relative inline-block touch-none" 
-            style={{ 
-              maxWidth: '100%',
-              transform: `scale(${mapScale}) translate(${mapTranslate.x / mapScale}px, ${mapTranslate.y / mapScale}px)`,
-              transformOrigin: 'center center',
-              transition: isPinching ? 'none' : 'transform 0.2s ease-out',
-            }}
-            onTouchStart={handleMapTouchStart}
-            onTouchMove={handleMapTouchMove}
-            onTouchEnd={handleMapTouchEnd}
-          >
-            <svg 
-              ref={svgRef}
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 1116 910"
-              className={`border-2 rounded-lg bg-gray-500 w-full h-auto md:w-[200%] md:relative md:left-1/2 md:-translate-x-1/2 ${isEditingCenters ? 'cursor-crosshair border-red-500' : 'border-gray-100'}`}
-              onClick={(e) => {
-                if (isEditingCenters) {
-                  handleMapClickInEditMode(e);
-                } else {
-                  handleMapDoubleTap();
-                }
-              }} 
-            >
-              {REGION_DATA.map(region => {
-                const center = regionCenters[region.id];
-                const regionIsHovered = hoveredRegion === region.id;
-                const regionBuff = PERMANENT_BUFFS[region.id] ? AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[region.id]) : null;
-                
-                const centerX = center ? center.x : 0;
-                const centerY = center ? center.y : 0;
-                
-                const isManuallySet = !!manualCenterOverrides[region.id];
-                
-                return (
-                  <React.Fragment key={region.id}>
-                    {/* PATH (ŚCIEŻKA MAPY) */}
-                    <path 
-                      data-region={region.id} 
-                      d={region.d} 
-                      onClick={handlePathClick} 
-                      onMouseEnter={handlePathHover} 
-                      onMouseLeave={handlePathLeave}
-                      onTouchStart={() => handleTouchStart(region.id)}
-                      onTouchEnd={handleTouchEnd} 
-                      style={{
-                          fill: '#d1d5db', 
-                          fillOpacity: 0.5, 
-                          stroke: '#2F2E31', 
-                          strokeWidth: 0.3, 
-                          transition: 'all 0.2s', 
-                          cursor: isEditingCenters ? 'crosshair' : 'pointer',
-                      }} 
-                    >
-                      {/* Tooltip for desktop */}
-                      {regionBuff && (
-                        <title>{regionBuff.name}</title>
-                      )}
-                    </path>
-                    
-                    {/* TEXT (CYFERKA) */}
-                     {center && (
-                      <>
-                        <text
-                          x={centerX}
-                          y={centerY - (regionColors[region.id] ? 8 : 0)}
-                          className="pointer-events-none" 
-                          style={{
-                            fill: isManuallySet ? '#FFD700' : '#FFFFFF', 
-                            fontSize: regionIsHovered ? '24px' : '20px', 
-                            fontWeight: 'bold',
-                            textAnchor: 'middle', 
-                            dominantBaseline: 'middle',
-                            transition: 'font-size 0.2s, fill 0.2s',
-                            filter: regionIsHovered ? 'drop-shadow(0 0 5px rgba(0,0,0,0.8))' : 'none',
-                          }}
-                        >
-                          {region.number}
-                        </text>
-                        {/* BUFF ICON */}
-                        {PERMANENT_BUFFS[region.id] && (
-                          <text
-                            x={centerX + 5}
-                            y={centerY - (regionColors[region.id] ? 10 : 0)}
-                            className="pointer-events-none"
-                            style={{
-                              fontSize: '16px',
-                              filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.8))',
-                            }}
-                          >
-                            {AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[region.id])?.icon}
-                          </text>
+              <svg 
+                ref={svgRef}
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 1116 910"
+                className={`border-2 rounded-lg bg-gray-500 w-full h-auto md:w-[200%] md:relative md:left-1/2 md:-translate-x-1/2 ${isEditingCenters ? 'cursor-crosshair border-red-500' : 'border-gray-100'}`}
+                onClick={(e) => {
+                  if (isEditingCenters) {
+                    handleMapClickInEditMode(e);
+                  } else {
+                    handleMapDoubleTap();
+                  }
+                }} 
+              >
+                {REGION_DATA.map(region => {
+                  const center = regionCenters[region.id];
+                  const regionIsHovered = hoveredRegion === region.id;
+                  const regionBuff = PERMANENT_BUFFS[region.id] ? AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[region.id]) : null;
+                  
+                  const centerX = center ? center.x : 0;
+                  const centerY = center ? center.y : 0;
+                  
+                  const isManuallySet = !!manualCenterOverrides[region.id];
+                  
+                  return (
+                    <React.Fragment key={region.id}>
+                      {/* PATH (ŚCIEŻKA MAPY) */}
+                      <path 
+                        data-region={region.id} 
+                        d={region.d} 
+                        onClick={handlePathClick} 
+                        onMouseEnter={handlePathHover} 
+                        onMouseLeave={handlePathLeave}
+                        onTouchStart={() => handleTouchStart(region.id)}
+                        onTouchEnd={handleTouchEnd} 
+                        style={{
+                            fill: '#d1d5db', 
+                            fillOpacity: 0.5, 
+                            stroke: '#2F2E31', 
+                            strokeWidth: 0.3, 
+                            transition: 'all 0.2s', 
+                            cursor: isEditingCenters ? 'crosshair' : 'pointer',
+                        }} 
+                      >
+                        {/* Tooltip for desktop */}
+                        {regionBuff && (
+                          <title>{regionBuff.name}</title>
                         )}
-                        {regionColors[region.id] && (
+                      </path>
+                      
+                      {/* TEXT (CYFERKA) */}
+                       {center && (
+                        <>
                           <text
                             x={centerX}
-                            y={centerY + 12}
-                            className="pointer-events-none"
+                            y={centerY - (regionColors[region.id] ? 8 : 0)}
+                            className="pointer-events-none" 
                             style={{
-                              fill: '#FFFFFF',
-                              fontSize: regionIsHovered ? '16px' : '14px',
-                              fontWeight: '600',
-                              textAnchor: 'middle',
+                              fill: isManuallySet ? '#FFD700' : '#FFFFFF', 
+                              fontSize: regionIsHovered ? '24px' : '20px', 
+                              fontWeight: 'bold',
+                              textAnchor: 'middle', 
                               dominantBaseline: 'middle',
-                              transition: 'font-size 0.2s',
-                              filter: 'drop-shadow(0 0 3px rgba(0,0,0,0.9))',
+                              transition: 'font-size 0.2s, fill 0.2s',
+                              filter: regionIsHovered ? 'drop-shadow(0 0 5px rgba(0,0,0,0.8))' : 'none',
                             }}
                           >
-                            {alliances.find(a => a.id === regionColors[region.id])?.name || ''}
+                            {region.number}
                           </text>
-                        )}
-                      </>
-                    )}
-                    
-                    {/* DODATKOWY PUNKT w trybie edycji */}
-                    {isEditingCenters && center && (
-                         <circle
-                            cx={centerX}
-                            cy={centerY}
-                            r={3}
-                            fill={isManuallySet ? '#FFD700' : '#FF0000'}
-                            className="pointer-events-none"
-                         />
-                    )}
-                  </React.Fragment>
-                );
-              })}
-              
-              {/* CAP marker */}
-              <rect x="475" y="415" width="150" height="95" fill="#9ea3ad" stroke="#6b7280" strokeWidth="5"/>
-              <text x="550" y="475" textAnchor="middle" fontSize="35" fontWeight="bold" fill="white">CAP</text>
-            </svg>
+                          {/* BUFF ICON */}
+                          {PERMANENT_BUFFS[region.id] && (
+                            <text
+                              x={centerX + 5}
+                              y={centerY - (regionColors[region.id] ? 10 : 0)}
+                              className="pointer-events-none"
+                              style={{
+                                fontSize: '16px',
+                                filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.8))',
+                              }}
+                            >
+                              {AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[region.id])?.icon}
+                            </text>
+                          )}
+                          {regionColors[region.id] && (
+                            <text
+                              x={centerX}
+                              y={centerY + 12}
+                              className="pointer-events-none"
+                              style={{
+                                fill: '#FFFFFF',
+                                fontSize: regionIsHovered ? '16px' : '14px',
+                                fontWeight: '600',
+                                textAnchor: 'middle',
+                                dominantBaseline: 'middle',
+                                transition: 'font-size 0.2s',
+                                filter: 'drop-shadow(0 0 3px rgba(0,0,0,0.9))',
+                              }}
+                            >
+                              {alliances.find(a => a.id === regionColors[region.id])?.name || ''}
+                            </text>
+                          )}
+                        </>
+                      )}
+                      
+                      {/* DODATKOWY PUNKT w trybie edycji */}
+                      {isEditingCenters && center && (
+                           <circle
+                              cx={centerX}
+                              cy={centerY}
+                              r={3}
+                              fill={isManuallySet ? '#FFD700' : '#FF0000'}
+                              className="pointer-events-none"
+                           />
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+                
+                {/* CAP marker */}
+                <rect x="475" y="415" width="150" height="95" fill="#9ea3ad" stroke="#6b7280" strokeWidth="5"/>
+                <text x="550" y="475" textAnchor="middle" fontSize="35" fontWeight="bold" fill="white">CAP</text>
+              </svg>
+            </div>
+
+            {/* Color Legend */}
+            {visibleAlliances.length > 0 && (
+              <div className="absolute bottom-4 left-4 bg-gray-900/70 backdrop-blur-sm rounded-lg p-3 pointer-events-none z-10">
+                <div className="space-y-1.5">
+                  {visibleAlliances.map(a => (
+                    <div key={a.id} className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-sm border border-white/30" style={{ backgroundColor: a.color }} />
+                      <span className="text-xs text-white/90 font-medium">{a.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Color Legend */}
-          {visibleAlliances.length > 0 && (
-            <div className="absolute bottom-4 left-4 bg-gray-900/70 backdrop-blur-sm rounded-lg p-3 pointer-events-none z-10">
-              <div className="space-y-1.5">
-                {visibleAlliances.map(a => (
-                  <div key={a.id} className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-sm border border-white/30" style={{ backgroundColor: a.color }} />
-                    <span className="text-xs text-white/90 font-medium">{a.name}</span>
-                  </div>
-                ))}
-              </div>
+          <div className="p-3 border-t border-gray-700 bg-gray-850 text-xs text-gray-300">
+            <div className="flex gap-4 justify-center flex-wrap">
+              <span className="md:hidden">📌 Tap territory to assign • Double-tap map to reset zoom</span>
+              <span className="hidden md:inline">💡 Click on territory to assign it to the active alliance</span>
+              <span className="hidden md:inline">💡 Click again to remove</span>
+              <span className="hidden md:inline">💡 Hover to highlight</span>
+              {isEditingCenters && (
+                  <span className="text-yellow-400 font-bold">⚠️ TRYB EDYCJI: Kliknij mapę, aby ustawić pozycję numeru. Złoty punkt oznacza pozycję zapisaną ręcznie.</span>
+              )}
+              
             </div>
-          )}
+          </div>
         </div>
 
-        <div className="p-3 border-t border-gray-700 bg-gray-850 text-xs text-gray-300">
-          <div className="flex gap-4 justify-center flex-wrap">
-            <span className="md:hidden">📌 Tap territory to assign • Double-tap map to reset zoom</span>
-            <span className="hidden md:inline">💡 Click on territory to assign it to the active alliance</span>
-            <span className="hidden md:inline">💡 Click again to remove</span>
-            <span className="hidden md:inline">💡 Hover to highlight</span>
-            {isEditingCenters && (
-                <span className="text-yellow-400 font-bold">⚠️ TRYB EDYCJI: Kliknij mapę, aby ustawić pozycję numeru. Złoty punkt oznacza pozycję zapisaną ręcznie.</span>
-            )}
-            
-          </div>
+        {/* Frankenstein view (mounted, but hidden via CSS to preserve state) */}
+        <div
+          style={{ display: activeTab === 'frankenstein' ? 'flex' : 'none', position: 'relative' }}
+          className="flex-1 min-h-0"
+        >
+          <FrankensteinEventTab isActive={activeTab === 'frankenstein'} />
         </div>
       </div>
 
       {/* Panel Kontrolny - Boczny pasek */}
-      <div className={`
-        fixed top-0 right-0 h-full w-full md:w-96 bg-gray-900 border-l border-gray-700
-        flex flex-col overflow-hidden z-50 transition-transform duration-300 ease-in-out
-        ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
-      `}>
-        <div className="p-6 border-b border-gray-700 flex justify-between items-start">
-        <div>
-          <h1 className="text-2xl font-bold mb-2">Alliance Map Manager</h1>
-          <p className="text-sm text-gray-400">Strategic Map Control</p>
-          <p className="text-xs text-gray-400 mt-2">
-            © 2025 Created by <span className="text-blue-400 font-semibold">aRczi from #49</span>
-          </p>
-          <p className="text-xs text-gray-400 mt-1">
-            Discord: <span className="text-purple-400 font-medium">.arczi.</span>
-          </p>
-        </div>
-
-        <button
-            onClick={() => setIsSidebarOpen(false)} 
-            className="p-2 ml-4 rounded-full text-white hover:bg-gray-700 transition md:hidden" 
-            aria-label="Zamknij menu"
+      <div style={{ display: activeTab === 'map' ? 'block' : 'none' }}>
+        <div
+          className={[
+            'fixed top-0 right-0 h-full w-full md:w-96 bg-gray-900 border-l border-gray-700',
+            'flex flex-col overflow-hidden z-50 transition-transform duration-300 ease-in-out',
+            isSidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0',
+          ].join(' ')}
         >
-            <X size={24} />
-        </button>
-        </div>
-        <div className="flex-1 overflow-auto p-6">
-          
-          {/* Tryb Edycji (Wyświetlany tylko w DEBUG_MODE) */}
-          {DEBUG_MODE_ENABLED && (
-            <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-               <h3 className="text-sm font-semibold mb-3 text-gray-300 flex items-center gap-2">
+          <div className="p-6 border-b border-gray-700 flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl font-bold mb-2">Alliance Map Manager</h1>
+              <p className="text-sm text-gray-400">Strategic Map Control</p>
+              <p className="text-xs text-gray-400 mt-2">
+                © 2025 Created by <span className="text-blue-400 font-semibold">aRczi from #49</span>
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Discord: <span className="text-purple-400 font-medium">.arczi.</span>
+              </p>
+            </div>
+
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="p-2 ml-4 rounded-full text-white hover:bg-gray-700 transition md:hidden"
+              aria-label="Zamknij menu"
+            >
+              <X size={24} />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-auto p-6">
+            {/* Tryb Edycji (Wyświetlany tylko w DEBUG_MODE) */}
+            {DEBUG_MODE_ENABLED && (
+              <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
+                <h3 className="text-sm font-semibold mb-3 text-gray-300 flex items-center gap-2">
                   <Settings size={16} /> Konfiguracja Mapy (DEBUG)
-               </h3>
-               <label className="flex items-center space-x-2 cursor-pointer">
+                </h3>
+
+                <label className="flex items-center space-x-2 cursor-pointer">
                   <input
-                      type="checkbox"
-                      checked={isEditingCenters}
-                      onChange={() => setIsEditingCenters(!isEditingCenters)}
-                      className="form-checkbox h-5 w-5 text-red-600 bg-gray-700 border-gray-600 rounded"
+                    type="checkbox"
+                    checked={isEditingCenters}
+                    onChange={() => setIsEditingCenters(!isEditingCenters)}
+                    className="form-checkbox h-5 w-5 text-red-600 bg-gray-700 border-gray-600 rounded"
                   />
                   <span className={`text-sm font-medium ${isEditingCenters ? 'text-red-400' : 'text-gray-400'}`}>
-                      Włącz Tryb Edycji Pozycji Numerów
+                    Włącz Tryb Edycji Pozycji Numerów
                   </span>
-               </label>
-               <p className="text-xs text-gray-500 mt-2">
-                   Włącz, aby klikać na mapie i ręcznie ustawiać pozycję numerów. Zmiany są **automatycznie synchronizowane**.
-               </p>
-               {isEditingCenters && (
-                 <button 
+                </label>
+
+                <p className="text-xs text-gray-500 mt-2">
+                  Włącz, aby klikać na mapie i ręcznie ustawiać pozycję numerów. Zmiany są **automatycznie synchronizowane**.
+                </p>
+
+                {isEditingCenters && (
+                  <button
                     onClick={() => setManualCenterOverrides({})}
                     className="mt-3 w-full p-2 bg-yellow-600 hover:bg-yellow-700 text-gray-900 rounded transition text-xs font-semibold"
-                 >
+                  >
                     Resetuj Ręcznie Ustawione Pozycje
-                 </button>
-               )}
-            </div>
-          )}
-          
-          {/* Alliances */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Alliances</h2>
-              <button
-                onClick={addAlliance}
-                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded transition flex items-center gap-1 text-sm"
-              >
-                <Plus size={16} />
-                Add alliance
-              </button>
-            </div>
+                  </button>
+                )}
+              </div>
+            )}
 
-            <div className="space-y-3">
-              {alliances.map(alliance => (
-                <div
-                  key={alliance.id}
-                  className={`p-4 rounded-lg border-2 transition cursor-pointer ${
-                    activeAllianceId === alliance.id
-                      ? 'border-blue-500 bg-gray-750 shadow-lg'
-                      : 'border-gray-700 bg-gray-800 hover:border-gray-600'
-                  }`}
-                  onClick={() => setActiveAllianceId(alliance.id)}
+            {/* Alliances */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Alliances</h2>
+                <button
+                  onClick={addAlliance}
+                  className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded transition flex items-center gap-1 text-sm"
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <input
-                      type="text"
-                      value={alliance.name}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateAlliance(alliance.id, 'name', e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="bg-transparent border-none outline-none font-medium flex-1 mr-2 text-white"
-                      placeholder="Nazwa sojuszu"
-                    />
-                    {alliances.length > 1 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                           if (window.confirm(`Are you sure you want to delete the alliance ${alliance.name}? This will remove all its territories.`)) {
-                             removeAlliance(alliance.id);
-                          }
-                        }}
-                        className="p-1 hover:bg-red-600 rounded transition"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="color"
-                      value={alliance.color}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateAlliance(alliance.id, 'color', e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-12 h-8 rounded cursor-pointer border border-gray-600"
-                    />
-                    <div className="flex-1">
-                      <div className="text-sm text-gray-300">
-                        {getRegionCount(alliance.id)}/8 territories
-                      </div>
-                      {getRegionCount(alliance.id) >= 8 && (
-                        <div className="text-xs text-green-400 font-semibold mt-1">
-                          ✓ LIMIT REACHED
-                        </div>
+                  <Plus size={16} />
+                  Add alliance
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {alliances.map(alliance => (
+                  <div
+                    key={alliance.id}
+                    className={`p-4 rounded-lg border-2 transition cursor-pointer ${
+                      activeAllianceId === alliance.id
+                        ? 'border-blue-500 bg-gray-750 shadow-lg'
+                        : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+                    }`}
+                    onClick={() => setActiveAllianceId(alliance.id)}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <input
+                        type="text"
+                        value={alliance.name}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          updateAlliance(alliance.id, 'name', e.target.value)
+                        }
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-transparent border-none outline-none font-medium flex-1 mr-2 text-white"
+                        placeholder="Nazwa sojuszu"
+                      />
+
+                      {alliances.length > 1 && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (
+                              window.confirm(
+                                'Are you sure you want to delete the alliance ' +
+                                  alliance.name +
+                                  '? This will remove all its territories.'
+                              )
+                            ) {
+                              removeAlliance(alliance.id);
+                            }
+                          }}
+                          className="p-1 hover:bg-red-600 rounded transition"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       )}
                     </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
 
-          {/* Statistics */}
-          <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-            <h3 className="text-sm font-semibold mb-3 text-gray-300">Statistics</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-400">All territories:</span>
-                <span className="font-semibold">{ALL_REGIONS_COUNT}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Assigned:</span>
-                <span className="font-semibold text-green-400">{getTotalRegions()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Free:</span>
-                <span className="font-semibold text-gray-500">{ALL_REGIONS_COUNT - getTotalRegions()}</span>
-              </div>
-              <h3 className="text-sm font-semibold mb-3 text-gray-300">Points</h3>
-              <div className="space-y-2 ">
-                {/* ✨ NOWE ELEMENTY: PUNKTACJA DLA KAŻDEGO SOJUSZU */}
-                {alliances
-                    // Sortowanie malejące na podstawie punktacji
-                    .sort((a, b) => (allianceScores[b.id] || 0) - (allianceScores[a.id] || 0)) 
-                    .map(alliance => (
-                        <div key={alliance.id} className="flex justify-between items-center ">
-                            <div className="flex items-center gap-2">
-                                <span 
-                                    className="w-2 h-2 rounded-full" 
-                                    style={{ backgroundColor: alliance.color }}
-                                ></span>
-                                <span className="text-gray-400 font-normal">{alliance.name}:</span>
-                            </div>
-                            <span className="font-bold text-s text-gray-300">
-                                {allianceScores[alliance.id] || 0}
-                            </span>
-                        </div>
-                    ))
-                }
-              </div>
-            </div>
-          </div>
-    
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="color"
+                        value={alliance.color}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          updateAlliance(alliance.id, 'color', e.target.value)
+                        }
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-12 h-8 rounded cursor-pointer border border-gray-600"
+                      />
 
-          {/* Alliance Buffs Summary */}
-          <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-            <h3 className="text-sm font-semibold mb-3 text-gray-300">Alliance Buffs</h3>
-            {alliances.map(alliance => {
-              const buffs = getBuffsByAlliance(alliance.id);
-              const hasBuffs = Object.keys(buffs).length > 0;
-              
-              return (
-                <div key={alliance.id} className="mb-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span 
-                      className="w-2 h-2 rounded-full" 
-                      style={{ backgroundColor: alliance.color }}
-                    ></span>
-                    <span className="text-sm font-semibold">{alliance.name}</span>
-                  </div>
-                  {hasBuffs ? (
-                    <div className="ml-4 space-y-1">
-                      {Object.entries(buffs).map(([buffName, value]) => (
-                        <div key={buffName} className="text-xs text-gray-400">
-                          • +{value}% {buffName}
+                      <div className="flex-1">
+                        <div className="text-sm text-gray-300">
+                          {getRegionCount(alliance.id)}/8 territories
                         </div>
-                      ))}
+
+                        {getRegionCount(alliance.id) >= 8 && (
+                          <div className="text-xs text-green-400 font-semibold mt-1">
+                            ✓ LIMIT REACHED
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="ml-4 text-xs text-gray-500 italic">No buffs</div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          {/* Actions */}
-          <div className="space-y-2">
-            
-            {/* === NOWY PRZYCISK EKSPORTU === */}
-            <button
-              onClick={exportMapToPNG}
-              className="w-full p-3 bg-indigo-600 hover:bg-indigo-700 rounded flex items-center justify-center gap-2 transition font-medium"
-            >
-              <Download size={18} />
-              Export as PNG
-            </button>
-            {/* ============================== */}
+                  </div>
+                ))}
+              </div>
+            </div>
 
-            {/* === COPY FOR DISCORD BUTTON === */}
-            <button
-              onClick={handleCopyForDiscord}
-              aria-label="Copy for Discord"
-              className={`w-full p-3 rounded flex items-center justify-center gap-2 transition font-medium ${
-                copyStatus === 'success'
-                  ? 'bg-green-600 hover:bg-green-700'
+            {/* Statistics */}
+            <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
+              <h3 className="text-sm font-semibold mb-3 text-gray-300">Statistics</h3>
+
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">All territories:</span>
+                  <span className="font-semibold">{ALL_REGIONS_COUNT}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Assigned:</span>
+                  <span className="font-semibold text-green-400">{getTotalRegions()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Free:</span>
+                  <span className="font-semibold text-gray-500">{ALL_REGIONS_COUNT - getTotalRegions()}</span>
+                </div>
+
+                <h3 className="text-sm font-semibold mb-3 text-gray-300">Points</h3>
+
+                <div className="space-y-2">
+                  {alliances
+                    .sort((a, b) => (allianceScores[b.id] || 0) - (allianceScores[a.id] || 0))
+                    .map(alliance => (
+                      <div key={alliance.id} className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: alliance.color }}
+                          ></span>
+                          <span className="text-gray-400 font-normal">{alliance.name}:</span>
+                        </div>
+                        <span className="font-bold text-s text-gray-300">
+                          {allianceScores[alliance.id] || 0}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Alliance Buffs Summary */}
+            <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
+              <h3 className="text-sm font-semibold mb-3 text-gray-300">Alliance Buffs</h3>
+
+              {alliances.map(alliance => {
+                const buffs = getBuffsByAlliance(alliance.id);
+                const hasBuffs = Object.keys(buffs).length > 0;
+
+                return (
+                  <div key={alliance.id} className="mb-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: alliance.color }}></span>
+                      <span className="text-sm font-semibold">{alliance.name}</span>
+                    </div>
+
+                    {hasBuffs ? (
+                      <div className="ml-4 space-y-1">
+                        {Object.entries(buffs).map(([buffName, value]) => (
+                          <div key={buffName} className="text-xs text-gray-400">
+                            • +{value}% {buffName}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="ml-4 text-xs text-gray-500 italic">No buffs</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Actions */}
+            <div className="space-y-2">
+              <button
+                onClick={exportMapToPNG}
+                className="w-full p-3 bg-indigo-600 hover:bg-indigo-700 rounded flex items-center justify-center gap-2 transition font-medium"
+              >
+                <Download size={18} />
+                Export as PNG
+              </button>
+
+              <button
+                onClick={handleCopyForDiscord}
+                aria-label="Copy for Discord"
+                className={`w-full p-3 rounded flex items-center justify-center gap-2 transition font-medium ${
+                  copyStatus === 'success'
+                    ? 'bg-green-600 hover:bg-green-700'
+                    : copyStatus === 'error'
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-indigo-600 hover:bg-indigo-700'
+                }`}
+              >
+                <ClipboardCopy size={18} />
+                {copyStatus === 'success'
+                  ? 'Copied! ✓'
                   : copyStatus === 'error'
-                  ? 'bg-red-600 hover:bg-red-700'
-                  : 'bg-indigo-600 hover:bg-indigo-700'
-              }`}
-            >
-              <ClipboardCopy size={18} />
-              {copyStatus === 'success'
-                ? 'Copied! ✓'
-                : copyStatus === 'error'
-                ? 'Copy failed'
-                : 'Copy for Discord'}
-            </button>
-            {/* ============================== */}
-            
-            <button
-              onClick={() => {
-                 if (window.confirm("Are you sure you want to reset the entire map?")) {
-                   resetMap();
-                 }
-              }}
-              className="w-full p-3 bg-red-600 hover:bg-red-700 rounded flex items-center justify-center gap-2 transition font-medium"
-            >
-              <RotateCcw size={18} />
-              Map reset
-            </button>
+                  ? 'Copy failed'
+                  : 'Copy for Discord'}
+              </button>
+
+              <button
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to reset the entire map?')) {
+                    resetMap();
+                  }
+                }}
+                className="w-full p-3 bg-red-600 hover:bg-red-700 rounded flex items-center justify-center gap-2 transition font-medium"
+              >
+                <RotateCcw size={18} />
+                Map reset
+              </button>
+            </div>
           </div>
         </div>
       </div>
-
       {/* Buff Info Modal (for mobile) */}
       {showBuffModal && selectedRegionForBuff && (
         <div 
