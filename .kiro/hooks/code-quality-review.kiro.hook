@@ -1,0 +1,22 @@
+{
+  "enabled": true,
+  "name": "Code Quality Review",
+  "description": "Analyzes modified source code files for potential improvements including code smells, design patterns, and best practices. Generates suggestions for improving readability, maintainability, and performance while maintaining existing functionality.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "*.ts",
+      "*.tsx",
+      "*.js",
+      "*.jsx",
+      "*.css"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Analyze the modified code for potential improvements. Look for: 1) Code smells (long functions, duplicated logic, magic numbers, deep nesting). 2) Design pattern opportunities (could a pattern improve structure?). 3) Best practices (proper error handling, type safety, naming conventions). 4) Readability improvements (clearer variable names, better comments, simpler logic). 5) Maintainability concerns (tight coupling, missing abstractions, hard-coded values). 6) Performance optimizations (unnecessary re-renders, inefficient loops, memory leaks). Provide concise, actionable suggestions that maintain existing functionality. Prioritize the most impactful improvements."
+  },
+  "workspaceFolderName": "Teritorymap",
+  "shortName": "code-quality-review"
+}
