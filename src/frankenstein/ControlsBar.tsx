@@ -104,7 +104,7 @@ export function ControlsBar({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-4 px-4 py-3 bg-gray-800 border-b border-gray-700">
+    <div className="flex flex-wrap items-center gap-4 px-4 py-3 bg-surface-card border-b border-surface-border">
       {/* Grid dimension inputs */}
       <div className="flex items-center gap-3 flex-wrap">
         <span className="text-sm font-semibold text-gray-300 whitespace-nowrap">
@@ -114,7 +114,7 @@ export function ControlsBar({
         {/* Cols input */}
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-1.5">
-            <label htmlFor="grid-cols" className="text-xs text-gray-400 whitespace-nowrap">
+            <label htmlFor="grid-cols" className="text-xs text-text-muted whitespace-nowrap">
               Kolumny
             </label>
             <input
@@ -129,10 +129,10 @@ export function ControlsBar({
               }}
               onBlur={handleColsBlur}
               onKeyDown={handleColsKeyDown}
-              className={`w-16 px-2 py-1 rounded text-sm text-center bg-gray-700 border
-                ${colsError ? 'border-red-500 text-red-300' : 'border-gray-600 text-gray-100'}
+              className={`w-16 px-2 py-1 rounded text-sm text-center bg-surface-hover border
+                ${colsError ? 'border-red-500 text-red-300' : 'border-surface-border text-gray-100'}
                 focus:outline-none focus:ring-1
-                ${colsError ? 'focus:ring-red-500' : 'focus:ring-indigo-500'}
+                ${colsError ? 'focus:ring-red-500' : 'focus:ring-accent-purple'}
               `}
               aria-describedby={colsError ? 'cols-error' : undefined}
             />
@@ -149,7 +149,7 @@ export function ControlsBar({
         {/* Rows input */}
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-1.5">
-            <label htmlFor="grid-rows" className="text-xs text-gray-400 whitespace-nowrap">
+            <label htmlFor="grid-rows" className="text-xs text-text-muted whitespace-nowrap">
               Wiersze
             </label>
             <input
@@ -164,10 +164,10 @@ export function ControlsBar({
               }}
               onBlur={handleRowsBlur}
               onKeyDown={handleRowsKeyDown}
-              className={`w-16 px-2 py-1 rounded text-sm text-center bg-gray-700 border
-                ${rowsError ? 'border-red-500 text-red-300' : 'border-gray-600 text-gray-100'}
+              className={`w-16 px-2 py-1 rounded text-sm text-center bg-surface-hover border
+                ${rowsError ? 'border-red-500 text-red-300' : 'border-surface-border text-gray-100'}
                 focus:outline-none focus:ring-1
-                ${rowsError ? 'focus:ring-red-500' : 'focus:ring-indigo-500'}
+                ${rowsError ? 'focus:ring-red-500' : 'focus:ring-accent-purple'}
               `}
               aria-describedby={rowsError ? 'rows-error' : undefined}
             />
@@ -189,9 +189,9 @@ export function ControlsBar({
         <button
           type="button"
           onClick={onReset}
-          className="px-3 py-1.5 rounded text-sm font-medium bg-gray-700 hover:bg-gray-600
-            text-gray-200 border border-gray-600 hover:border-gray-500
-            focus:outline-none focus:ring-2 focus:ring-gray-500
+          className="px-3 py-1.5 rounded text-sm font-medium bg-surface-hover hover:bg-surface-card
+            text-gray-200 border border-surface-border hover:border-accent-orange
+            focus:outline-none focus:ring-2 focus:ring-accent-purple
             transition-colors duration-150"
         >
           Resetuj układ
@@ -201,9 +201,9 @@ export function ControlsBar({
         <button
           type="button"
           onClick={onExport}
-          className="px-3 py-1.5 rounded text-sm font-medium bg-indigo-600 hover:bg-indigo-500
-            text-white border border-indigo-500 hover:border-indigo-400
-            focus:outline-none focus:ring-2 focus:ring-indigo-400
+          className="px-3 py-1.5 rounded text-sm font-medium bg-gradient-to-r from-accent-orange to-accent-purple hover:opacity-90
+            text-white border border-accent-purple hover:border-accent-orange
+            focus:outline-none focus:ring-2 focus:ring-accent-purple
             transition-colors duration-150"
         >
           Eksportuj jako obraz
@@ -230,10 +230,10 @@ function SaveStatusIndicator({ status }: SaveStatusIndicatorProps) {
 
   if (status === 'saving') {
     return (
-      <div className="flex items-center gap-1.5 text-gray-400 text-sm" aria-live="polite">
+      <div className="flex items-center gap-1.5 text-text-muted text-sm" aria-live="polite">
         {/* Spinner */}
         <svg
-          className="animate-spin h-4 w-4 text-gray-400"
+          className="animate-spin h-4 w-4 text-text-muted"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"

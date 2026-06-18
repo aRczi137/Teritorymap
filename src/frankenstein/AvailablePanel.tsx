@@ -28,16 +28,16 @@ export function AvailablePanel({ players, onDragStart, onDropOnPanel }: Availabl
 
   return (
     <div
-      className="flex flex-col h-full bg-gray-800 rounded-lg overflow-hidden"
+      className="flex flex-col h-full bg-surface-card rounded-lg overflow-hidden"
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
       {/* Header */}
-      <div className="px-3 py-2 bg-gray-700 border-b border-gray-600">
+      <div className="px-3 py-2 bg-surface-hover border-b border-surface-border">
         <h2 className="text-sm font-semibold text-gray-200 uppercase tracking-wide">
           Dostępni gracze
         </h2>
-        <p className="text-xs text-gray-400 mt-0.5">
+        <p className="text-xs text-text-muted mt-0.5">
           {players.length} {players.length === 1 ? 'gracz' : 'graczy'}
         </p>
       </div>

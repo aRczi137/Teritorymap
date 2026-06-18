@@ -36,7 +36,7 @@ export function PlayerListPanel({ players, onAddPlayer, onRemovePlayer }: Player
   };
 
   return (
-    <div className="flex flex-col gap-3 bg-gray-800 rounded-lg p-3">
+    <div className="flex flex-col gap-3 bg-surface-card rounded-lg p-3">
       <h2 className="text-white font-semibold text-sm uppercase tracking-wide">
         Gracze
       </h2>
@@ -49,11 +49,11 @@ export function PlayerListPanel({ players, onAddPlayer, onRemovePlayer }: Player
             value={inputValue}
             onChange={handleInputChange}
             placeholder="Nazwa gracza"
-            className="flex-1 bg-gray-700 text-white placeholder-gray-400 rounded px-2 py-1 text-sm border border-gray-600 focus:outline-none focus:border-blue-500"
+            className="flex-1 bg-surface-hover text-white placeholder-text-muted rounded px-2 py-1 text-sm border border-surface-border focus:outline-none focus:border-accent-purple"
           />
           <button
             type="submit"
-            className="bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white text-sm font-medium px-3 py-1 rounded transition-colors"
+            className="bg-gradient-to-r from-accent-orange to-accent-purple hover:opacity-90 active:opacity-80 text-white text-sm font-medium px-3 py-1 rounded transition-colors"
           >
             Dodaj gracza
           </button>
@@ -69,13 +69,13 @@ export function PlayerListPanel({ players, onAddPlayer, onRemovePlayer }: Player
 
       {/* Player list */}
       {players.length === 0 ? (
-        <p className="text-gray-500 text-xs italic">Brak graczy. Dodaj pierwszego gracza powyżej.</p>
+        <p className="text-text-muted text-xs italic">Brak graczy. Dodaj pierwszego gracza powyżej.</p>
       ) : (
         <ul className="flex flex-col gap-1 max-h-64 overflow-y-auto">
           {players.map((player) => (
             <li
               key={player.id}
-              className="flex items-center justify-between bg-gray-700 rounded px-2 py-1 gap-2"
+              className="flex items-center justify-between bg-surface-hover rounded px-2 py-1 gap-2"
             >
               {/* Color dot + name */}
               <div className="flex items-center gap-2 min-w-0">
@@ -92,7 +92,7 @@ export function PlayerListPanel({ players, onAddPlayer, onRemovePlayer }: Player
                 type="button"
                 onClick={() => onRemovePlayer(player.id)}
                 aria-label={`Usuń gracza ${player.name}`}
-                className="text-gray-400 hover:text-red-400 active:text-red-600 transition-colors flex-shrink-0 text-sm leading-none px-1"
+                className="text-text-muted hover:text-red-400 active:text-red-600 transition-colors flex-shrink-0 text-sm leading-none px-1"
               >
                 ✕
               </button>

@@ -284,11 +284,11 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
     ctx.scale(scale, scale);
 
     // Background
-    ctx.fillStyle = '#1a1a2e';
+    ctx.fillStyle = '#1a1a24';
     ctx.fillRect(0, 0, w, h);
 
     // Grid lines (only in the exported region)
-    ctx.strokeStyle = '#2a2a4a';
+    ctx.strokeStyle = '#2a2a3a';
     ctx.lineWidth = 1;
     ctx.beginPath();
     for (let c = 0; c <= exportCols; c++) {
@@ -439,10 +439,10 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
           display: 'flex',
           flexDirection: 'column',
           gap: 4,
-          background: 'rgba(15,15,30,0.92)',
+          background: 'rgba(17,17,24,0.92)',
           backdropFilter: 'blur(8px)',
           borderRadius: 8,
-          border: '1px solid #2a2a4a',
+          border: '1px solid #2a2a3a',
           padding: toolsOpen ? '6px 8px' : '6px 10px',
           boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
           maxWidth: 'calc(100vw - 70px)',
@@ -476,9 +476,9 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
             <button
               type="button"
               onClick={() => setResetModalOpen(true)}
-              className="px-2 py-1 rounded text-xs font-medium bg-gray-700 hover:bg-gray-600
-                text-gray-200 border border-gray-600 hover:border-gray-500
-                focus:outline-none focus:ring-2 focus:ring-gray-500
+              className="px-2 py-1 rounded text-xs font-medium bg-surface-hover hover:bg-surface-hover/80
+                text-gray-200 border border-surface-border hover:border-[rgba(155,48,255,0.4)]
+                focus:outline-none focus:ring-2 focus:ring-accent-purple
                 transition-colors duration-150"
             >
               Reset
@@ -488,7 +488,7 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
               onClick={exportAsImage}
               className="px-2 py-1 rounded text-xs font-medium bg-indigo-600 hover:bg-indigo-500
                 text-white border border-indigo-500 hover:border-indigo-400
-                focus:outline-none focus:ring-2 focus:ring-indigo-400
+                focus:outline-none focus:ring-2 focus:ring-accent-purple
                 transition-colors duration-150"
             >
               Export PNG
@@ -496,9 +496,9 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
             <button
               type="button"
               onClick={saveLayoutToFile}
-              className="px-2 py-1 rounded text-xs font-medium bg-gray-700 hover:bg-gray-600
-                text-gray-200 border border-gray-600 hover:border-gray-500
-                focus:outline-none focus:ring-2 focus:ring-gray-500
+              className="px-2 py-1 rounded text-xs font-medium bg-surface-hover hover:bg-surface-hover/80
+                text-gray-200 border border-surface-border hover:border-[rgba(155,48,255,0.4)]
+                focus:outline-none focus:ring-2 focus:ring-accent-purple
                 transition-colors duration-150"
             >
               Save layout
@@ -506,9 +506,9 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
             <button
               type="button"
               onClick={loadLayoutFromFile}
-              className="px-2 py-1 rounded text-xs font-medium bg-gray-700 hover:bg-gray-600
-                text-gray-200 border border-gray-600 hover:border-gray-500
-                focus:outline-none focus:ring-2 focus:ring-gray-500
+              className="px-2 py-1 rounded text-xs font-medium bg-surface-hover hover:bg-surface-hover/80
+                text-gray-200 border border-surface-border hover:border-[rgba(155,48,255,0.4)]
+                focus:outline-none focus:ring-2 focus:ring-accent-purple
                 transition-colors duration-150"
             >
               Load layout
@@ -538,10 +538,10 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
           display: 'flex',
           flexDirection: 'column',
           gap: 6,
-          background: 'rgba(15,15,30,0.92)',
+          background: 'rgba(17,17,24,0.92)',
           backdropFilter: 'blur(8px)',
           borderRadius: 8,
-          border: '1px solid #2a2a4a',
+          border: '1px solid #2a2a3a',
           padding: panelOpen ? '8px 10px' : '6px 10px',
           boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
           maxWidth: 'min(260px, calc(100vw - 80px))',
@@ -587,8 +587,8 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
               flex: 1,
               padding: '5px 8px',
               borderRadius: 6,
-              border: '1px solid #3a3a5a',
-              background: '#1a1a2e',
+              border: '1px solid #2a2a3a',
+              background: '#1a1a24',
               color: '#e0e0f0',
               fontSize: 12,
               outline: 'none',
@@ -600,8 +600,8 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
             style={{
               padding: '5px 6px',
               borderRadius: 6,
-              border: '1px solid #3a3a5a',
-              background: '#1a1a2e',
+              border: '1px solid #2a2a3a',
+              background: '#1a1a24',
               color: LEVEL_COLORS[playerLevelInput],
               fontSize: 12,
               fontWeight: 700,
@@ -623,7 +623,7 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
               padding: '5px 10px',
               borderRadius: 6,
               border: 'none',
-              background: playerNameInput.trim() ? '#22c55e' : '#2a2a4a',
+              background: playerNameInput.trim() ? '#22c55e' : '#2a2a3a',
               color: playerNameInput.trim() ? '#fff' : '#666',
               fontSize: 12,
               fontWeight: 600,
@@ -679,8 +679,8 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
                         flex: 1,
                         padding: '2px 5px',
                         borderRadius: 4,
-                        border: '1px solid #3a3a5a',
-                        background: '#1a1a2e',
+                        border: '1px solid #2a2a3a',
+                        background: '#1a1a24',
                         color: '#e0e0f0',
                         fontSize: 11,
                         outline: 'none',
@@ -693,8 +693,8 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
                       style={{
                         padding: '2px 4px',
                         borderRadius: 4,
-                        border: '1px solid #3a3a5a',
-                        background: '#1a1a2e',
+                        border: '1px solid #2a2a3a',
+                        background: '#1a1a24',
                         color: LEVEL_COLORS[editLevel],
                         fontSize: 10,
                         fontWeight: 700,
@@ -882,9 +882,9 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: 'rgba(15,15,30,0.88)',
+            background: 'rgba(17,17,24,0.88)',
             backdropFilter: 'blur(8px)',
-            border: '1px solid #2a2a4a',
+            border: '1px solid #2a2a3a',
             borderRadius: 10,
             boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
             color: '#aaaacc',

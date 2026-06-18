@@ -1048,10 +1048,10 @@ const calculateAllianceScores = React.useCallback(() => {
 const allianceScores = calculateAllianceScores();
   
   return (
-    <div className="flex h-screen bg-gray-900 text-gray-100 relative">
+    <div className="flex h-screen bg-surface-bg text-gray-100 relative">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 bg-gray-800 border border-gray-600 rounded-lg shadow-xl text-sm font-medium text-white toast-enter">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 bg-surface-card border border-gray-600 rounded-lg shadow-xl text-sm font-medium text-white toast-enter">
           {toastMessage}
         </div>
       )}
@@ -1059,7 +1059,7 @@ const allianceScores = calculateAllianceScores();
       {/* Przycisk Menu - Pozycja stała */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="fixed top-4 right-4 z-50 p-3 bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg transition md:hidden"
+        className="fixed top-4 right-4 z-50 p-3 bg-gradient-to-r from-accent-orange to-accent-purple hover:opacity-90 rounded-lg shadow-lg transition md:hidden"
       >
         {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
@@ -1073,38 +1073,38 @@ const allianceScores = calculateAllianceScores();
 
 
       {/* Obszar główny: Tabs (mapa + FrankensteinEvent) */}
-      <div className="flex-1 flex flex-col bg-gray-800 w-full">
+      <div className="flex-1 flex flex-col bg-surface-card w-full">
         {/* Tab header */}
-        <div className="p-4 border-b border-gray-700 flex items-center justify-between gap-3">
+        <div className="p-4 border-b border-surface-border flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <button
               onClick={() => { setActiveTab('map'); trackTabSwitch('map'); }}
               className={`px-3 py-2 rounded transition text-sm font-semibold ${
                 activeTab === 'map'
-                  ? 'bg-gray-700 text-white border border-gray-600'
-                  : 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700'
+                  ? 'bg-surface-hover text-white border border-gray-600'
+                  : 'bg-surface-card hover:bg-surface-hover text-text-muted border border-surface-border'
               }`}
               aria-label="Territory Map tab"
             >
-              🗺️ Territory Map
+              🗺️ <span className="gradient-text">Territory Map</span>
             </button>
             <button
               onClick={() => { setActiveTab('frankenstein'); trackTabSwitch('hive_builder'); }}
               className={`px-3 py-2 rounded transition text-sm font-semibold ${
                 activeTab === 'frankenstein'
-                  ? 'bg-gray-700 text-white border border-gray-600'
-                  : 'bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700'
+                  ? 'bg-surface-hover text-white border border-gray-600'
+                  : 'bg-surface-card hover:bg-surface-hover text-text-muted border border-surface-border'
               }`}
               aria-label="Hive Builder tab"
             >
-              🐝 Hive Builder
+              🐝 <span className="gradient-text">Hive Builder</span>
             </button>
           </div>
 
           <div className="text-sm hidden md:block">
             {activeTab === 'map' && (
               <>
-                Aktywny: <span className="text-blue-400 font-semibold">
+                Aktywny: <span className="text-brand-primary-light font-semibold">
                   {alliances.find(a => a.id === activeAllianceId)?.name}
                 </span>
               </>
@@ -1113,17 +1113,17 @@ const allianceScores = calculateAllianceScores();
         </div>
 
         {/* Map view (mounted, but hidden via CSS to preserve state) */}
-        <div style={{ display: activeTab === 'map' ? 'flex' : 'none' }} className="flex-1 flex flex-col bg-gray-800 w-full">
-          <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+        <div style={{ display: activeTab === 'map' ? 'flex' : 'none' }} className="flex-1 flex flex-col bg-surface-card w-full">
+          <div className="p-4 border-b border-surface-border flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold">Territory Map</h2>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-text-muted">
                 {getTotalRegions()} regions assigned
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                Created by <span className="text-blue-400 font-semibold">aRczi from #49</span>
+                Created by <span className="text-accent-orange font-semibold">aRczi from #49</span>
                 <span className="text-gray-600 mx-1">•</span>
-                Discord: <span className="text-purple-400 font-medium">.arczi.</span>
+                Discord: <span className="text-accent-purple font-medium">.arczi.</span>
               </p>
             </div>
             <div className="hidden md:flex items-center gap-1">
@@ -1132,7 +1132,7 @@ const allianceScores = calculateAllianceScores();
                 disabled={!canUndo}
                 className={`p-2 rounded transition ${
                   canUndo
-                    ? 'hover:bg-gray-700 text-gray-200'
+                    ? 'hover:bg-surface-hover text-gray-200'
                     : 'text-gray-600 cursor-not-allowed'
                 }`}
                 aria-label="Undo"
@@ -1144,7 +1144,7 @@ const allianceScores = calculateAllianceScores();
                 disabled={!canRedo}
                 className={`p-2 rounded transition ${
                   canRedo
-                    ? 'hover:bg-gray-700 text-gray-200'
+                    ? 'hover:bg-surface-hover text-gray-200'
                     : 'text-gray-600 cursor-not-allowed'
                 }`}
                 aria-label="Redo"
@@ -1155,12 +1155,12 @@ const allianceScores = calculateAllianceScores();
           </div>
 
           {/* Active alliance indicator - mobile only */}
-          <div className="md:hidden px-4 py-2 bg-gray-750 border-b border-gray-700 flex items-center gap-2">
+          <div className="md:hidden px-4 py-2 bg-[rgba(155,48,255,0.1)] border-b border-surface-border flex items-center gap-2">
             <span 
               className="w-3 h-3 rounded-full border border-gray-500"
               style={{ backgroundColor: alliances.find(a => a.id === activeAllianceId)?.color }}
             ></span>
-            <span className="text-sm text-gray-300">
+            <span className="text-sm text-text-muted">
               Active: <span className="font-semibold text-white">{alliances.find(a => a.id === activeAllianceId)?.name}</span>
             </span>
             <div className="flex items-center gap-0.5 ml-auto">
@@ -1169,7 +1169,7 @@ const allianceScores = calculateAllianceScores();
                 disabled={!canUndo}
                 className={`p-1.5 rounded transition ${
                   canUndo
-                    ? 'hover:bg-gray-700 text-gray-200'
+                    ? 'hover:bg-surface-hover text-gray-200'
                     : 'text-gray-600 cursor-not-allowed'
                 }`}
                 aria-label="Undo"
@@ -1181,7 +1181,7 @@ const allianceScores = calculateAllianceScores();
                 disabled={!canRedo}
                 className={`p-1.5 rounded transition ${
                   canRedo
-                    ? 'hover:bg-gray-700 text-gray-200'
+                    ? 'hover:bg-surface-hover text-gray-200'
                     : 'text-gray-600 cursor-not-allowed'
                 }`}
                 aria-label="Redo"
@@ -1333,7 +1333,7 @@ const allianceScores = calculateAllianceScores();
 
             {/* Color Legend */}
             {visibleAlliances.length > 0 && (
-              <div className="absolute bottom-4 left-4 bg-gray-900/70 backdrop-blur-sm rounded-lg p-3 pointer-events-none z-10">
+              <div className="absolute bottom-4 left-4 bg-surface-bg/70 backdrop-blur-sm rounded-lg p-3 pointer-events-none z-10">
                 <div className="space-y-1.5">
                   {visibleAlliances.map(a => (
                     <div key={a.id} className="flex items-center gap-2">
@@ -1346,7 +1346,7 @@ const allianceScores = calculateAllianceScores();
             )}
           </div>
 
-          <div className="p-3 border-t border-gray-700 bg-gray-850 text-xs text-gray-300">
+          <div className="p-3 border-t border-surface-border bg-gray-850 text-xs text-text-muted">
             <div className="flex gap-4 justify-center flex-wrap">
               <span className="md:hidden">📌 Tap territory to assign • Double-tap map to reset zoom</span>
               <span className="hidden md:inline">💡 Click on territory to assign it to the active alliance</span>
@@ -1373,26 +1373,26 @@ const allianceScores = calculateAllianceScores();
       <div style={{ display: activeTab === 'map' ? 'block' : 'none' }}>
         <div
           className={[
-            'fixed top-0 right-0 h-full w-full md:w-96 bg-gray-900 border-l border-gray-700',
+            'fixed top-0 right-0 h-full w-full md:w-96 bg-surface-bg border-l border-surface-border',
             'flex flex-col overflow-hidden z-50 transition-transform duration-300 ease-in-out',
             isSidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0',
           ].join(' ')}
         >
-          <div className="p-6 border-b border-gray-700 flex justify-between items-start">
+          <div className="p-6 border-b border-surface-border flex justify-between items-start">
             <div>
-              <h1 className="text-2xl font-bold mb-2">Alliance Map Manager</h1>
-              <p className="text-sm text-gray-400">Strategic Map Control</p>
-              <p className="text-xs text-gray-400 mt-2">
-                © 2025 Created by <span className="text-blue-400 font-semibold">aRczi from #49</span>
+              <h1 className="text-2xl font-bold mb-2 gradient-text">Alliance Map Manager</h1>
+              <p className="text-sm text-text-muted">Strategic Map Control</p>
+              <p className="text-xs text-text-muted mt-2">
+                © 2025 Created by <span className="text-accent-orange font-semibold">aRczi from #49</span>
               </p>
-              <p className="text-xs text-gray-400 mt-1">
-                Discord: <span className="text-purple-400 font-medium">.arczi.</span>
+              <p className="text-xs text-text-muted mt-1">
+                Discord: <span className="text-accent-purple font-medium">.arczi.</span>
               </p>
             </div>
 
             <button
               onClick={() => setIsSidebarOpen(false)}
-              className="p-2 ml-4 rounded-full text-white hover:bg-gray-700 transition md:hidden"
+              className="p-2 ml-4 rounded-full text-white hover:bg-surface-hover transition md:hidden"
               aria-label="Zamknij menu"
             >
               <X size={24} />
@@ -1402,8 +1402,8 @@ const allianceScores = calculateAllianceScores();
           <div className="flex-1 overflow-auto p-6">
             {/* Tryb Edycji (Wyświetlany tylko w DEBUG_MODE) */}
             {DEBUG_MODE_ENABLED && (
-              <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-                <h3 className="text-sm font-semibold mb-3 text-gray-300 flex items-center gap-2">
+              <div className="mb-6 p-4 bg-surface-card rounded-lg border border-surface-border">
+                <h3 className="text-sm font-semibold mb-3 text-text-muted flex items-center gap-2">
                   <Settings size={16} /> Konfiguracja Mapy (DEBUG)
                 </h3>
 
@@ -1412,9 +1412,9 @@ const allianceScores = calculateAllianceScores();
                     type="checkbox"
                     checked={isEditingCenters}
                     onChange={() => setIsEditingCenters(!isEditingCenters)}
-                    className="form-checkbox h-5 w-5 text-red-600 bg-gray-700 border-gray-600 rounded"
+                    className="form-checkbox h-5 w-5 text-red-600 bg-surface-hover border-gray-600 rounded"
                   />
-                  <span className={`text-sm font-medium ${isEditingCenters ? 'text-red-400' : 'text-gray-400'}`}>
+                  <span className={`text-sm font-medium ${isEditingCenters ? 'text-red-400' : 'text-text-muted'}`}>
                     Włącz Tryb Edycji Pozycji Numerów
                   </span>
                 </label>
@@ -1440,7 +1440,7 @@ const allianceScores = calculateAllianceScores();
                 <h2 className="text-lg font-semibold">Alliances</h2>
                 <button
                   onClick={addAlliance}
-                  className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded transition flex items-center gap-1 text-sm"
+                  className="px-3 py-2 bg-gradient-to-r from-accent-orange to-accent-purple hover:opacity-90 rounded transition flex items-center gap-1 text-sm"
                 >
                   <Plus size={16} />
                   Add alliance
@@ -1453,8 +1453,8 @@ const allianceScores = calculateAllianceScores();
                     key={alliance.id}
                     className={`p-4 rounded-lg border-2 transition cursor-pointer ${
                       activeAllianceId === alliance.id
-                        ? 'border-blue-500 bg-gray-750 shadow-lg'
-                        : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+                        ? 'border-accent-purple bg-[rgba(155,48,255,0.1)] shadow-lg'
+                        : 'border-surface-border bg-surface-card hover:border-[rgba(155,48,255,0.4)]'
                     }`}
                     onClick={() => setActiveAllianceId(alliance.id)}
                   >
@@ -1503,7 +1503,7 @@ const allianceScores = calculateAllianceScores();
                       />
 
                       <div className="flex-1">
-                        <div className="text-sm text-gray-300">
+                        <div className="text-sm text-text-muted">
                           {getRegionCount(alliance.id)}/8 territories
                         </div>
 
@@ -1520,24 +1520,24 @@ const allianceScores = calculateAllianceScores();
             </div>
 
             {/* Statistics */}
-            <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-              <h3 className="text-sm font-semibold mb-3 text-gray-300">Statistics</h3>
+            <div className="mb-6 p-4 bg-surface-card rounded-lg border border-surface-border">
+              <h3 className="text-sm font-semibold mb-3 text-text-muted">Statistics</h3>
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-400">All territories:</span>
+                  <span className="text-text-muted">All territories:</span>
                   <span className="font-semibold">{ALL_REGIONS_COUNT}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Assigned:</span>
+                  <span className="text-text-muted">Assigned:</span>
                   <span className="font-semibold text-green-400">{getTotalRegions()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Free:</span>
+                  <span className="text-text-muted">Free:</span>
                   <span className="font-semibold text-gray-500">{ALL_REGIONS_COUNT - getTotalRegions()}</span>
                 </div>
 
-                <h3 className="text-sm font-semibold mb-3 text-gray-300">Points</h3>
+                <h3 className="text-sm font-semibold mb-3 text-text-muted">Points</h3>
 
                 <div className="space-y-2">
                   {alliances
@@ -1549,9 +1549,9 @@ const allianceScores = calculateAllianceScores();
                             className="w-2 h-2 rounded-full"
                             style={{ backgroundColor: alliance.color }}
                           ></span>
-                          <span className="text-gray-400 font-normal">{alliance.name}:</span>
+                          <span className="text-text-muted font-normal">{alliance.name}:</span>
                         </div>
-                        <span className="font-bold text-s text-gray-300">
+                        <span className="font-bold text-s text-text-muted">
                           {allianceScores[alliance.id] || 0}
                         </span>
                       </div>
@@ -1561,8 +1561,8 @@ const allianceScores = calculateAllianceScores();
             </div>
 
             {/* Alliance Buffs Summary */}
-            <div className="mb-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-              <h3 className="text-sm font-semibold mb-3 text-gray-300">Alliance Buffs</h3>
+            <div className="mb-6 p-4 bg-surface-card rounded-lg border border-surface-border">
+              <h3 className="text-sm font-semibold mb-3 text-text-muted">Alliance Buffs</h3>
 
               {alliances.map(alliance => {
                 const buffs = getBuffsByAlliance(alliance.id);
@@ -1578,7 +1578,7 @@ const allianceScores = calculateAllianceScores();
                     {hasBuffs ? (
                       <div className="ml-4 space-y-1">
                         {Object.entries(buffs).map(([buffName, value]) => (
-                          <div key={buffName} className="text-xs text-gray-400">
+                          <div key={buffName} className="text-xs text-text-muted">
                             • +{value}% {buffName}
                           </div>
                         ))}
@@ -1595,7 +1595,7 @@ const allianceScores = calculateAllianceScores();
             <div className="space-y-2">
               <button
                 onClick={exportMapToPNG}
-                className="w-full p-3 bg-indigo-600 hover:bg-indigo-700 rounded flex items-center justify-center gap-2 transition font-medium"
+                className="w-full p-3 bg-gradient-to-r from-accent-orange to-accent-purple hover:opacity-90 rounded flex items-center justify-center gap-2 transition font-medium"
               >
                 <Download size={18} />
                 Export as PNG
@@ -1609,7 +1609,7 @@ const allianceScores = calculateAllianceScores();
                     ? 'bg-green-600 hover:bg-green-700'
                     : copyStatus === 'error'
                     ? 'bg-red-600 hover:bg-red-700'
-                    : 'bg-indigo-600 hover:bg-indigo-700'
+                    : 'bg-gradient-to-r from-accent-orange to-accent-purple hover:opacity-90'
                 }`}
               >
                 <ClipboardCopy size={18} />
@@ -1642,7 +1642,7 @@ const allianceScores = calculateAllianceScores();
           onClick={() => setShowBuffModal(false)}
         >
           <div 
-            className="bg-gray-800 rounded-lg p-4 max-w-sm w-full border border-gray-600"
+            className="bg-surface-card rounded-lg p-4 max-w-sm w-full border border-gray-600"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-bold mb-3">
@@ -1654,19 +1654,19 @@ const allianceScores = calculateAllianceScores();
                 <div className="text-3xl mb-2 text-center">
                   {AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[selectedRegionForBuff])?.icon}
                 </div>
-                <div className="text-base font-semibold text-center text-blue-400">
+                <div className="text-base font-semibold text-center text-brand-primary-light">
                   {AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[selectedRegionForBuff])?.name}
                 </div>
               </div>
             ) : (
-              <div className="mb-4 text-center text-gray-400">
+              <div className="mb-4 text-center text-text-muted">
                 No buff assigned to this territory
               </div>
             )}
             
             {regionColors[selectedRegionForBuff] && (
-              <div className="mb-4 p-2 bg-gray-700 rounded">
-                <div className="text-sm text-gray-400 mb-1">Controlled by:</div>
+              <div className="mb-4 p-2 bg-surface-hover rounded">
+                <div className="text-sm text-text-muted mb-1">Controlled by:</div>
                 <div className="flex items-center gap-2">
                   <span 
                     className="w-3 h-3 rounded-full" 
@@ -1681,7 +1681,7 @@ const allianceScores = calculateAllianceScores();
             
             <button
               onClick={() => setShowBuffModal(false)}
-              className="w-full p-2 bg-blue-600 hover:bg-blue-700 rounded transition font-medium"
+              className="w-full p-2 bg-gradient-to-r from-accent-orange to-accent-purple hover:opacity-90 rounded transition font-medium"
             >
               Close
             </button>

@@ -34,14 +34,14 @@ export function ResetModal({ isOpen, onCancel, onConfirm }: ResetModalProps) {
       />
 
       {/* Dialog card */}
-      <div className="relative z-10 w-full max-w-sm mx-4 bg-gray-800 border border-gray-600 rounded-xl shadow-2xl p-6">
+      <div className="relative z-10 w-full max-w-sm mx-4 bg-surface-card border border-surface-border rounded-xl shadow-2xl p-6">
         <h2
           id="reset-modal-title"
           className="text-lg font-semibold text-gray-100 mb-3"
         >
           Reset layout
         </h2>
-        <p className="text-gray-300 text-sm mb-6">
+        <p className="text-text-muted text-sm mb-6">
           Are you sure you want to reset the layout? All players will be removed from the grid.
         </p>
 
@@ -50,7 +50,7 @@ export function ResetModal({ isOpen, onCancel, onConfirm }: ResetModalProps) {
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-600 text-gray-200 hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors"
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-surface-hover text-text-muted hover:bg-surface-card focus:outline-none focus:ring-2 focus:ring-accent-purple transition-colors"
           >
             Cancel
           </button>
