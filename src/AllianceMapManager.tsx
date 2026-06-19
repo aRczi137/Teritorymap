@@ -407,6 +407,10 @@ export function formatDiscordMessage(params: FormatDiscordMessageParams): string
 
 // ================================
 
+// Scroll-wheel zoom constants
+const SCROLL_ZOOM_FACTOR = 1.15;
+const SCROLL_DEBOUNCE_MS = 150;
+
  // Dodajemy typ React.FC
 const AllianceMapManager: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -504,7 +508,10 @@ const AllianceMapManager: React.FC = () => {
   const [isPinching, setIsPinching] = useState<boolean>(false);
   const [lastPinchDist, setLastPinchDist] = useState<number>(0);
   const [lastTouchCenter, setLastTouchCenter] = useState<{ x: number; y: number } | null>(null);
+  const [isScrolling, setIsScrolling] = useState<boolean>(false);
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<number | null>(null);
+  const mapWrapperRef = useRef<HTMLDivElement>(null);
   
   // Ref dla elementu SVG
   // const svgRef = useRef<SVGSVGElement>(null);
@@ -984,6 +991,53 @@ const AllianceMapManager: React.FC = () => {
     lastTapRef.current = now;
   };
 
+  // Scroll-wheel zoom handler (anchor-point zoom)
+  const handleWheel = useCallback((e: WheelEvent) => {
+    e.preventDefault();
+
+    const container = mapContainerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+
+    // 1. Compute zoom factor from scroll direction
+    const factor = e.deltaY < 0 ? SCROLL_ZOOM_FACTOR : 1 / SCROLL_ZOOM_FACTOR;
+
+    // 2. Compute new scale, clamped to [1, 5]
+    let newScale = Math.min(5, Math.max(1, mapScale * factor));
+
+    // 3. Compute cursor anchor relative to container
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+
+    // 4. Compute new translation preserving anchor point
+    let newTranslateX = cx - (cx - mapTranslate.x) * (newScale / mapScale);
+    let newTranslateY = cy - (cy - mapTranslate.y) * (newScale / mapScale);
+
+    // 5. Snap-back rule: if close to 1, reset fully
+    if (newScale < 1.1) {
+      newScale = 1;
+      newTranslateX = 0;
+      newTranslateY = 0;
+    }
+
+    setMapScale(newScale);
+    setMapTranslate({ x: newTranslateX, y: newTranslateY });
+
+    // 6. Disable transition during active scrolling
+    setIsScrolling(true);
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    scrollTimeoutRef.current = window.setTimeout(() => {
+      setIsScrolling(false);
+    }, SCROLL_DEBOUNCE_MS);
+  }, [mapScale, mapTranslate]);
+
+  // Attach non-passive wheel listener to mapWrapperRef
+  useEffect(() => {
+    const el = mapWrapperRef.current;
+    if (!el) return;
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [handleWheel]);
 
   const getBuffsByAlliance = (allianceId: number) => {
   const buffs: Record<string, number> = {};
@@ -1190,11 +1244,17 @@ const allianceScores = calculateAllianceScores();
               </button>
             </div>
             <span className="text-xs text-gray-500">
-              {mapScale > 1 ? `${Math.round(mapScale * 100)}%` : 'Pinch to zoom'}
+              {mapScale > 1
+                ? `${Math.round(mapScale * 100)}%`
+                : <>
+                    <span className="hidden md:inline">Scroll to zoom</span>
+                    <span className="md:hidden">Pinch to zoom</span>
+                  </>
+              }
             </span>
           </div>
 
-          <div className="flex-1 overflow-hidden relative p-2 md:p-6 flex items-center justify-center bg-gray-850">
+          <div ref={mapWrapperRef} className="flex-1 overflow-hidden relative p-2 md:p-6 flex items-center justify-center bg-gray-850">
             <div 
               ref={mapContainerRef}
               className="relative inline-block touch-none" 
@@ -1202,7 +1262,7 @@ const allianceScores = calculateAllianceScores();
                 maxWidth: '100%',
                 transform: `scale(${mapScale}) translate(${mapTranslate.x / mapScale}px, ${mapTranslate.y / mapScale}px)`,
                 transformOrigin: 'center center',
-                transition: isPinching ? 'none' : 'transform 0.2s ease-out',
+                transition: (isPinching || isScrolling) ? 'none' : 'transform 0.2s ease-out',
               }}
               onTouchStart={handleMapTouchStart}
               onTouchMove={handleMapTouchMove}
