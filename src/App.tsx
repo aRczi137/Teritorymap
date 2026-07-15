@@ -1,11 +1,12 @@
 import { useAuth } from './auth/AuthContext';
 import { OAuthCallback } from './auth/OAuthCallback';
+import { CALLBACK_PATH } from './auth/basePath';
 import { LoadingScreen } from './components/LoadingScreen';
 import { LoginPage } from './components/LoginPage';
 import AllianceMapManager from './AllianceMapManager';
 
 export default function App() {
-  if (window.location.pathname === '/callback') return <OAuthCallback />;
+  if (window.location.pathname === CALLBACK_PATH.replace(/\/$/, '')) return <OAuthCallback />;
   return <AuthRouter />;
 }
 

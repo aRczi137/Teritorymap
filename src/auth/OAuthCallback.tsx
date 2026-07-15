@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { signInWithCustomToken } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 import { exchangeCode, getFirebaseToken } from './api';
+import { CALLBACK_PATH } from './basePath';
 
 export function OAuthCallback() {
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +30,7 @@ export function OAuthCallback() {
 
     (async () => {
       try {
-        const redirectUri = window.location.origin + '/callback';
+        const redirectUri = window.location.origin + CALLBACK_PATH.replace(/\/$/, '');
         const result = await exchangeCode(code, redirectUri, state ?? undefined);
         if (cancelled) return;
 

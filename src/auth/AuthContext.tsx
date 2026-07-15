@@ -3,6 +3,7 @@ import { signInWithCustomToken, signOut } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 import type { UserInfo } from './api';
 import { getAuthState, getMe, getFirebaseToken, logoutSession } from './api';
+import { CALLBACK_PATH } from './basePath';
 
 const SESSION_KEY = 'session_token';
 
@@ -64,7 +65,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       alert('Discord Client ID not configured. Set VITE_DISCORD_CLIENT_ID in .env');
       return;
     }
-    const redirectUri = encodeURIComponent(window.location.origin + '/callback');
+    const cbPath = CALLBACK_PATH.replace(/\/$/, '');
+    const redirectUri = encodeURIComponent(window.location.origin + cbPath);
     window.location.href = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify&state=${state}`;
   }, []);
 
