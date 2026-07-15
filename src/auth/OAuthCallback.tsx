@@ -44,7 +44,8 @@ export function OAuthCallback() {
         window.location.replace('/');
       } catch (err) {
         if (!cancelled) {
-          setError('Authentication failed. Please try again.');
+          const message = err instanceof Error ? err.message : String(err);
+          setError(`Authentication failed: ${message}`);
           setLoading(false);
         }
       }
