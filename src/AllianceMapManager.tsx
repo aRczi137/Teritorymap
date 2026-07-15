@@ -50,19 +50,19 @@ const DEBUG_MODE_ENABLED = false;
 function getBuffIconPath(category: Buff['category']): string {
   switch (category) {
     case 'wood':
-      return 'M7 1v8M3.5 4h7M2 7h10M4 12h6';
+      return 'M7 2L9 6L8 6L8 12L6 12L6 6L5 6Z';
     case 'electricity':
-      return 'M7.5 1L4 6.5h2.5L5.5 12L9 6.5H6.5z';
+      return 'M7.5 1L3 6.5H6.5L5 12L9.5 6H6.5Z';
     case 'iron':
-      return 'M3 0h8l-1 2h2l-1 2h-2l1 3h-1l1 3h2l-1 2h-2l-1 2H3l-1-2H0l1-2h2l1-3H3l1-3H2l1-2h2z';
+      return 'M7 0.5L10.5 7L7 13.5L3.5 7Z';
     case 'combat':
-      return 'M1 1l1.5 4.5L1 10l1.5 1L4 6.5l1.5 4.5L7 10l-1.5-4.5L7 1l-1.5 1L4 6.5 2.5 2zM10 2L9 5l-1-3 1 4.5L8 9l1 3.5L10 9l1 3.5L12 9l-1-2.5L12 2l-1 3z';
+      return 'M3 1L11 13M11 1L3 13';
     case 'building':
-      return 'M2 14V7h3V1h9v13zM4 9h1v1H4zm0 3h1v1H4zm4-6h1v1H8zm0 3h1v1H8zM6 9h1v1H6zm2 3h1v1H8zm-2 0h1v1H6zm0-3h1v1H6z';
+      return 'M1 7L7 1L13 7M3 7V13H11V7';
     case 'training':
-      return 'M8 0a3 3 0 00-3 3c0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3zM3 5a2 2 0 00-2 2v7h2v-6l2-2.5V14h2v-4';
+      return 'M7 1A3 3 0 0 0 7 7A3 3 0 0 0 7 1M3 13V8H11V13';
     case 'research':
-      return 'M5 1v4L1 13h10L7 5V1zM3 10h1v1H3zm3 0h1v1H6z';
+      return 'M5 1V5L1 13H13L9 5V1Z';
     default:
       return '';
   }
@@ -1146,7 +1146,7 @@ const allianceScores = calculateAllianceScores();
       {/* Obszar główny: Tabs (mapa + FrankensteinEvent) */}
       <div className="flex-1 flex flex-col bg-surface-card w-full">
         {/* Header bar */}
-        <div className="px-4 py-2 border-b border-surface-border flex items-center justify-between bg-surface-card">
+        <div className="px-4 py-2 border-b border-surface-border flex items-center justify-between bg-surface-card md:pr-96">
           <div className="flex items-center gap-3">
             <a href="/" title="Back to ArcBot">
               <img src="/logo.svg" className="w-8 h-8" alt="ArcBot" />
@@ -1156,6 +1156,34 @@ const allianceScores = calculateAllianceScores();
             <span className="font-heading text-text-emphasis">
               {activeTab === 'map' ? 'Territory Map' : 'Hive Builder'}
             </span>
+            {activeTab === 'map' && (
+              <div className="hidden md:flex items-center gap-1 ml-4">
+                <button
+                  onClick={undo}
+                  disabled={!canUndo}
+                  className={`p-1.5 rounded transition ${
+                    canUndo
+                      ? 'hover:bg-surface-hover text-text-muted'
+                      : 'text-gray-600 cursor-not-allowed'
+                  }`}
+                  aria-label="Undo"
+                >
+                  <Undo2 size={16} />
+                </button>
+                <button
+                  onClick={redo}
+                  disabled={!canRedo}
+                  className={`p-1.5 rounded transition ${
+                    canRedo
+                      ? 'hover:bg-surface-hover text-text-muted'
+                      : 'text-gray-600 cursor-not-allowed'
+                  }`}
+                  aria-label="Redo"
+                >
+                  <Redo2 size={16} />
+                </button>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <a href="/" className="text-text-muted hover:text-text-emphasis text-sm no-underline">
@@ -1167,41 +1195,6 @@ const allianceScores = calculateAllianceScores();
 
         {/* Map view (mounted, but hidden via CSS to preserve state) */}
         <div style={{ display: activeTab === 'map' ? 'flex' : 'none' }} className="flex-1 flex flex-col bg-surface-card w-full">
-          <div className="p-4 border-b border-surface-border flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold">Territory Map</h2>
-              <p className="text-sm text-text-muted">
-                {getTotalRegions()} regions assigned
-              </p>
-            </div>
-            <div className="hidden md:flex items-center gap-1">
-              <button
-                onClick={undo}
-                disabled={!canUndo}
-                className={`p-2 rounded transition ${
-                  canUndo
-                    ? 'hover:bg-surface-hover text-gray-200'
-                    : 'text-gray-600 cursor-not-allowed'
-                }`}
-                aria-label="Undo"
-              >
-                <Undo2 size={18} />
-              </button>
-              <button
-                onClick={redo}
-                disabled={!canRedo}
-                className={`p-2 rounded transition ${
-                  canRedo
-                    ? 'hover:bg-surface-hover text-gray-200'
-                    : 'text-gray-600 cursor-not-allowed'
-                }`}
-                aria-label="Redo"
-              >
-                <Redo2 size={18} />
-              </button>
-            </div>
-          </div>
-
           {/* Active alliance indicator - mobile only */}
           <div className="md:hidden px-4 py-2 bg-[rgba(155,48,255,0.1)] border-b border-surface-border flex items-center gap-2">
             <span 
@@ -1334,17 +1327,15 @@ const allianceScores = calculateAllianceScores();
                           {PERMANENT_BUFFS[region.id] && (() => {
                             const buff = AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[region.id]);
                             if (!buff) return null;
-                            const iconX = centerX + 5;
-                            const iconY = centerY - (regionColors[region.id] ? 10 : 0);
+                            const iconX = centerX + 14;
+                            const iconY = centerY - 14;
                             return (
                               <g transform={`translate(${iconX - 7}, ${iconY - 7})`} className="pointer-events-none">
+                                <circle cx="7" cy="7" r="6.5" fill="rgba(0,0,0,0.55)" stroke="rgba(255,255,255,0.15)" strokeWidth="0.5" />
                                 <path
                                   d={getBuffIconPath(buff.category)}
-                                  fill="none"
-                                  stroke="rgba(255,255,255,0.8)"
-                                  strokeWidth="0.8"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
+                                  fill="rgba(255,255,255,0.85)"
+                                  stroke="none"
                                 />
                               </g>
                             );
