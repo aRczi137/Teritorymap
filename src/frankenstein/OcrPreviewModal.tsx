@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { X } from 'lucide-react';
 import { PLAYER_LEVELS, LEVEL_COLORS } from './types';
 import type { ParsedPlayer } from './ocrImport';
 import { isValidLevel } from './ocrImport';
@@ -62,8 +63,8 @@ export function OcrPreviewModal({ isOpen, suggestions, rawText, onConfirm, onCan
     >
       <div
         style={{
-          background: '#1a1a2e',
-          border: '1px solid #2a2a4a',
+          background: '#1a1a24',
+          border: '1px solid #2a2a3a',
           borderRadius: 12,
           padding: '20px 24px',
           minWidth: 380,
@@ -78,10 +79,10 @@ export function OcrPreviewModal({ isOpen, suggestions, rawText, onConfirm, onCan
       >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ color: '#e0e0f0', fontSize: 15, fontWeight: 700, margin: 0 }}>
+          <h3 style={{ color: 'var(--text-emphasis)', fontSize: 15, fontWeight: 700, margin: 0 }}>
             Recognized players preview
           </h3>
-          <span style={{ color: '#888', fontSize: 12 }}>
+          <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>
             {entries.length} {entries.length === 1 ? 'player' : 'players'}
           </span>
         </div>
@@ -118,9 +119,9 @@ export function OcrPreviewModal({ isOpen, suggestions, rawText, onConfirm, onCan
                   flex: 1,
                   padding: '5px 8px',
                   borderRadius: 5,
-                  border: '1px solid #3a3a5a',
-                  background: '#0f0f1e',
-                  color: '#e0e0f0',
+                  border: '1px solid #2a2a3a',
+                  background: '#111118',
+                  color: 'var(--text-emphasis)',
                   fontSize: 13,
                   outline: 'none',
                 }}
@@ -131,8 +132,8 @@ export function OcrPreviewModal({ isOpen, suggestions, rawText, onConfirm, onCan
                 style={{
                   padding: '5px 4px',
                   borderRadius: 5,
-                  border: '1px solid #3a3a5a',
-                  background: '#0f0f1e',
+                  border: '1px solid #2a2a3a',
+                  background: '#111118',
                   color: LEVEL_COLORS[entry.level],
                   fontSize: 12,
                   fontWeight: 700,
@@ -156,7 +157,7 @@ export function OcrPreviewModal({ isOpen, suggestions, rawText, onConfirm, onCan
                   justifyContent: 'center',
                   background: 'transparent',
                   border: 'none',
-                  color: '#666',
+            color: 'var(--text-muted)',
                   fontSize: 14,
                   cursor: 'pointer',
                   borderRadius: 4,
@@ -164,7 +165,7 @@ export function OcrPreviewModal({ isOpen, suggestions, rawText, onConfirm, onCan
                 onMouseEnter={(e) => { (e.target as HTMLElement).style.color = '#ef4444'; }}
                 onMouseLeave={(e) => { (e.target as HTMLElement).style.color = '#666'; }}
               >
-                ×
+                <X size={14} />
               </button>
             </div>
           ))}
@@ -177,9 +178,9 @@ export function OcrPreviewModal({ isOpen, suggestions, rawText, onConfirm, onCan
           style={{
             padding: '5px 12px',
             borderRadius: 6,
-            border: '1px dashed #3a3a5a',
+            border: '1px dashed #2a2a3a',
             background: 'transparent',
-            color: '#888',
+            color: 'var(--text-muted)',
             fontSize: 12,
             cursor: 'pointer',
             alignSelf: 'flex-start',
@@ -212,9 +213,9 @@ export function OcrPreviewModal({ isOpen, suggestions, rawText, onConfirm, onCan
               style={{
                 marginTop: 6,
                 padding: 8,
-                background: '#0a0a18',
-                borderRadius: 6,
-                color: '#888',
+            background: '#111118',
+            borderRadius: 6,
+            color: 'var(--text-muted)',
                 fontSize: 10,
                 maxHeight: 120,
                 overflowY: 'auto',
@@ -235,9 +236,9 @@ export function OcrPreviewModal({ isOpen, suggestions, rawText, onConfirm, onCan
             style={{
               padding: '7px 16px',
               borderRadius: 6,
-              border: '1px solid #3a3a5a',
+              border: '1px solid #2a2a3a',
               background: 'transparent',
-              color: '#aaa',
+              color: 'var(--text-muted)',
               fontSize: 13,
               cursor: 'pointer',
             }}

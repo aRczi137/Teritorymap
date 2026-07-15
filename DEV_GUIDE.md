@@ -8,6 +8,8 @@ Webowa aplikacja do zarządzania terytoriami i layoutem Hive w grze Dark War Sur
 
 Login przez Discord obowiązkowy. Każdy użytkownik ma własne prywatne dane w Firestore.
 
+Aplikacja jest zintegrowana z ArcBotem — działa pod tym samym adresem `https://arcbot.duckdns.org/teritorymap` przez reverse proxy nginx na VPS. ArcBot landing page ma dropdown "Tools" w nav barze z linkami do obu zakładek.
+
 ## Jak działa auth
 
 ```
@@ -15,7 +17,7 @@ Przeglądarka → ArcBot API (port 8000) → Discord OAuth → ArcBot API → Fi
 ```
 
 1. Użytkownik klika "Login with Discord" → `GET /api/auth/state` (ArcBot API) → redirect do Discord
-2. Discord odsyła do `/callback?code=...`
+2. Discord odsyła do `/teritorymap/callback?code=...` (w produkcji) lub `/callback` (lokalnie)
 3. `OAuthCallback.tsx` → `POST /api/auth/discord/callback` (ArcBot) → dostaje `session_id` + user info
 4. `POST /api/auth/firebase-token` (Bearer session_id) → dostaje Firebase custom token
 5. `signInWithCustomToken(auth, token)` → Firebase Auth zalogowany, `uid = Discord user ID`
@@ -23,6 +25,10 @@ Przeglądarka → ArcBot API (port 8000) → Discord OAuth → ArcBot API → Fi
 
 Przy odświeżeniu strony: `getMe(session_id)` → `getFirebaseToken` → `signInWithCustomToken` → mapa się ładuje.
 Jeśli session wygasło (24h inactivity) → getMe zwraca 401 → czyścimy localStorage → LoginPage.
+
+### SSO przez wspólną domenę
+
+Aplikacja działa pod tą samą domeną co ArcBot frontend (`arcbot.duckdns.org`). Dzięki temu `localStorage` jest współdzielony — użytkownik loguje się raz w ArcBocie, a Territorymap automatycznie znajduje token `session_token` i autoryzuje się bez ponownego logowania. Logout w ArcBocie czyści token i Territorymap też się wylogowuje.
 
 ## Gdzie są zapisane dane
 
@@ -83,13 +89,14 @@ src/
 ├── App.tsx                      # Router: /callback → OAuthCallback, reszta → AuthRouter
 │                                  AuthRouter: isLoading → LoadingScreen
 │                                              !user → LoginPage
-│                                              user → <AllianceMapManager userId={user.id}>
+│                                              user → parsuje ?tab= z URL → AllianceMapManager
+│                                  ?tab=hive → otwiera Hive Builder, ?tab=map lub brak → Mapa
 ├── firebaseConfig.ts            # Inicjalizacja Firebase (Firestore + Auth)
 │                                  auth używa inMemoryPersistence — brak persistencji między reloadami
 │                                  Eksportuje: db, auth
 │
 ├── AllianceMapManager.tsx       # GŁÓWNY KOMPONENT — 1757 linii
-│   ├── Props: { userId: string }
+│   ├── Props: { userId: string, initialTab?: 'map' | 'frankenstein' }
 │   ├── Stan: alliances[], regionColors{}, manualCenterOverrides{}, activeAllianceId,
 │   │         history[], historyPosition, mapScale/mapTranslate, UI flags
 │   ├── Firestore: onSnapshot na users/{userId}/territory_map/main (load)
@@ -102,12 +109,15 @@ src/
 │   ├── api.ts                  # Funkcje fetch do ArcBot API (getAuthState, exchangeCode,
 │   │                              getFirebaseToken, getMe, logoutSession)
 │   │                              Bazowy URL: VITE_ARC_API_URL (default http://localhost:8000)
+│   ├── basePath.ts             # BASE_PATH / CALLBACK_PATH — dynamiczne ścieżki
+│   │                              '/' w dev, '/teritorymap/' w produkcji (z vite.config.ts base)
 │   ├── AuthContext.tsx          # React context: user, isLoading, login(), logout()
 │   │                              Provider czyta session_token z localStorage przy starcie
-│   │                              login() → redirect do Discord
+│   │                              login() → redirect do Discord (callback URL z CALLBACK_PATH)
 │   │                              logout() → wywołuje logoutSession + signOut + czyści storage
 │   └── OAuthCallback.tsx        # Strona /callback — wymiana code na Firebase token
 │                                  Loading spinner → error card (retry) → redirect na /
+│                                  redirectUri używa CALLBACK_PATH
 │
 ├── components/                  # Komponenty UI (NIE mylić z ArcBot frontend/components/)
 │   ├── LoadingScreen.tsx        # Full-screen spinner (isLoading=true)
@@ -167,7 +177,21 @@ Endpoint `/api/auth/firebase-token` został dodany w ramach tego projektu. Wymag
 - **Project**: `teritory-map-s49`
 - **Firestore**: baza danych (dokumenty map)
 - **Firebase Auth**: używane tylko przez `signInWithCustomToken` — nie ma rejestracji email/hasło
-- **Firebase Hosting**: hostuje aplikację (`teritory-map-s49.web.app`)
+- **Firebase Hosting**: NIE jest już głównym hostingiem — aplikacja serwowana z VPS przez nginx. Hosting trzymany jako fallback/snapshot.
+
+### ArcBot VPS (nginx)
+
+Aplikacja serwowana z `https://arcbot.duckdns.org/teritorymap` przez nginx na VPS `92.5.171.42`. Pliki statyczne w `/opt/teritorymap/` (uploadowane przez `ArcBot/scripts/deploy.ps1`).
+
+```nginx
+# /etc/nginx/sites-available/arcbot (fragment)
+location /teritorymap {
+    alias /opt/teritorymap;
+    try_files $uri $uri/ /teritorymap/index.html;
+}
+```
+
+Dzięki wspólnej domenie z ArcBot frontendem (`/`), localStorage jest współdzielony — automatyczne SSO.
 
 ## Zmienne środowiskowe
 
@@ -190,31 +214,43 @@ Ustawiane przed `npm run build`. Vite embeduje te wartości w bundle.
 
 ## Deployment
 
-### Firebase Hosting
+### Automatyczny (razem z ArcBotem)
 
-```bash
-# W katalogu Territorymap:
+Deploy realizowany przez `ArcBot/scripts/deploy.ps1` z katalogu ArcBot:
 
-npm run build                                  # buduje do dist/
-firebase deploy --only firestore:rules         # najpierw reguły (jeśli zmienione)
-firebase deploy --only hosting                 # potem hosting
+```powershell
+# deploy.ps1 wykonuje:
+# 1. Backend: git pull + pip install + systemctl restart discord-bot bot-api
+# 2. Frontend ArcBot: npm run build → scp dist/* → VPS /opt/frontend/
+# 3. Territorymap: npm run build → scp dist/* → VPS /opt/teritorymap/
 ```
 
-Konfiguracja w `firebase.json`:
-- `public: "dist"` — serwuje z katalogu builda
-- `rewrites: [{ "source": "**", "destination": "/index.html" }]` — SPA routing dla `/callback`
-- Hosting site: `teritory-map-s49` → URL: `https://teritory-map-s49.web.app`
+### Ręczny deploy Territorymap
+
+```bash
+cd Teritorymap
+npm run build                                  # buduje do dist/
+# Pliki statyczne serwowane z /opt/teritorymap na VPS przez nginx
+# Upload: scp -r dist/* ubuntu@92.5.171.42:/opt/teritorymap/
+```
+
+### Firestore rules (osobno, tylko przy zmianach)
+
+```bash
+firebase deploy --only firestore:rules
+```
 
 ### Discord OAuth redirect URIs (Discord Developer Portal)
 
 Muszą być zarejestrowane:
 - `http://localhost:5173/callback` (dev)
-- `https://teritory-map-s49.web.app/callback` (prod)
+- `https://arcbot.duckdns.org/teritorymap/callback` (prod — przez VPS)
+- `https://teritory-map-s49.web.app/callback` (fallback — Firebase Hosting)
 
 ### ArcBot API — wymagane zmiany na produkcji
 
 1. `.env`: `FIREBASE_SERVICE_ACCOUNT_KEY=<base64-service-account-json>`
-2. `.env`: `FRONTEND_URL` musi zawierać `https://teritory-map-s49.web.app` (CORS)
+2. `.env`: `FRONTEND_URL` musi zawierać `https://arcbot.duckdns.org` (CORS)
 3. `requirements.txt`: `firebase-admin==6.6.0` (zainstalować)
 4. Restart API: `systemctl restart bot-api`
 
@@ -260,6 +296,11 @@ Testy nie pokrywają: `AllianceMapManager` (za duży komponent), auth flow, komp
 | Jak dodać nową zakładkę? | `AllianceMapManager.tsx` — dodaj przycisk w headerze + warunkowe renderowanie |
 | Gdzie jest logika importu OCR? | `frankenstein/ocrImport.ts` (Tesseract.js) |
 | Czemu grid jest 1000×1000? | `useFrankyLayout.ts` → `DEFAULT_COLS = DEFAULT_ROWS = 1000`. Dostosowane pod duże hive. |
+| Jak otworzyć Hive Builder bezpośrednio? | `/teritorymap?tab=hive` — URL z parametrem `?tab=hive` otwiera od razu Hive Buildera |
+| Dlaczego nie muszę się logować drugi raz? | Wspólna domena `arcbot.duckdns.org` = wspólny localStorage = token `session_token` jest już obecny |
+| Gdzie jest konfiguracja nginx? | `/etc/nginx/sites-available/arcbot` na VPS — blok `/teritorymap` → `alias /opt/teritorymap` |
+| Gdzie deployuje się Territorymap? | `ArcBot/scripts/deploy.ps1` buduje Territorymap + frontend + backend i wgrywa wszystko na VPS |
+| Gdzie w ArcBocie są linki do narzędzi? | `frontend/src/pages/LandingPage.tsx` → NavDropdown "Tools" z linkami `/teritorymap?tab=map` i `/teritorymap?tab=hive` |
 
 ## Migawki z kodu
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { X } from 'lucide-react';
 import type { Player } from './types';
 import { validatePlayerName } from './validation';
 
@@ -94,7 +95,7 @@ export function PlayerListPanel({ players, onAddPlayer, onRemovePlayer }: Player
                 aria-label={`Usuń gracza ${player.name}`}
                 className="text-text-muted hover:text-red-400 active:text-red-600 transition-colors flex-shrink-0 text-sm leading-none px-1"
               >
-                ✕
+                <X size={14} />
               </button>
             </li>
           ))}

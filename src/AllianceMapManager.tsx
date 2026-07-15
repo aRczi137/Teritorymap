@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Plus, Trash2, RotateCcw, Menu, X, Settings, Download, ClipboardCopy, Undo2, Redo2 } from 'lucide-react';
 import { FrankensteinEventTab } from './frankenstein/FrankensteinEventTab';
-import { trackTabSwitch, trackMapExport } from './analytics';
+import { trackMapExport } from './analytics';
 import { db } from './firebaseConfig';
 import { doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
 import { UserMenu } from './components/UserMenu';
@@ -45,6 +45,28 @@ interface Buff {
 
 // --- KONFIGURACJA DEWELOPERSKA ---
 const DEBUG_MODE_ENABLED = false;
+
+// --- BUFF ICON SVG PATHS (14×14 viewBox) ---
+function getBuffIconPath(category: Buff['category']): string {
+  switch (category) {
+    case 'wood':
+      return 'M7 1v8M3.5 4h7M2 7h10M4 12h6';
+    case 'electricity':
+      return 'M7.5 1L4 6.5h2.5L5.5 12L9 6.5H6.5z';
+    case 'iron':
+      return 'M3 0h8l-1 2h2l-1 2h-2l1 3h-1l1 3h2l-1 2h-2l-1 2H3l-1-2H0l1-2h2l1-3H3l1-3H2l1-2h2z';
+    case 'combat':
+      return 'M1 1l1.5 4.5L1 10l1.5 1L4 6.5l1.5 4.5L7 10l-1.5-4.5L7 1l-1.5 1L4 6.5 2.5 2zM10 2L9 5l-1-3 1 4.5L8 9l1 3.5L10 9l1 3.5L12 9l-1-2.5L12 2l-1 3z';
+    case 'building':
+      return 'M2 14V7h3V1h9v13zM4 9h1v1H4zm0 3h1v1H4zm4-6h1v1H8zm0 3h1v1H8zM6 9h1v1H6zm2 3h1v1H8zm-2 0h1v1H6zm0-3h1v1H6z';
+    case 'training':
+      return 'M8 0a3 3 0 00-3 3c0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3zM3 5a2 2 0 00-2 2v7h2v-6l2-2.5V14h2v-4';
+    case 'research':
+      return 'M5 1v4L1 13h10L7 5V1zM3 10h1v1H3zm3 0h1v1H6z';
+    default:
+      return '';
+  }
+}
 
 // --- LISTA DOSTĘPNYCH BUFÓW ---
 const AVAILABLE_BUFFS: Buff[] = [
@@ -398,7 +420,7 @@ const SCROLL_DEBOUNCE_MS = 150;
 const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frankenstein' }> = ({ userId, initialTab = 'map' }) => {
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const [activeTab, setActiveTab] = useState<'map' | 'frankenstein'>(initialTab);
+  const [activeTab] = useState<'map' | 'frankenstein'>(initialTab);
   // === TYPOWANIE STANÓW ===
   const [alliances, setAlliances] = useState<Alliance[]>([
     { id: 1, name: 'KNS', color: '#e67e22' },
@@ -860,7 +882,7 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
     
     // Limit 8 terytoriów na sojusz
     if (currentCount >= 8) {
-      showToast(`❌ ${alliances.find(a => a.id === activeAllianceId)?.name} reached max 8 territories!`);
+      showToast(`${alliances.find(a => a.id === activeAllianceId)?.name} reached max 8 territories!`);
       return; // Nie rób nic więcej
     }
     
@@ -1124,46 +1146,22 @@ const allianceScores = calculateAllianceScores();
       {/* Obszar główny: Tabs (mapa + FrankensteinEvent) */}
       <div className="flex-1 flex flex-col bg-surface-card w-full">
         {/* Header bar */}
-        <div className="px-4 py-2 border-b border-surface-border flex items-center justify-between bg-[#111118]">
-          <h1 className="text-base font-bold text-white tracking-wide">Territory Map</h1>
-          <UserMenu />
-        </div>
-
-        {/* Tab header */}
-        <div className="px-4 py-2 border-b border-surface-border flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => { setActiveTab('map'); trackTabSwitch('map'); }}
-              className={`px-3 py-2 rounded transition text-sm font-semibold ${
-                activeTab === 'map'
-                  ? 'bg-surface-hover text-white border border-gray-600'
-                  : 'bg-surface-card hover:bg-surface-hover text-text-muted border border-surface-border'
-              }`}
-              aria-label="Territory Map tab"
-            >
-              🗺️ <span className="gradient-text">Territory Map</span>
-            </button>
-            <button
-              onClick={() => { setActiveTab('frankenstein'); trackTabSwitch('hive_builder'); }}
-              className={`px-3 py-2 rounded transition text-sm font-semibold ${
-                activeTab === 'frankenstein'
-                  ? 'bg-surface-hover text-white border border-gray-600'
-                  : 'bg-surface-card hover:bg-surface-hover text-text-muted border border-surface-border'
-              }`}
-              aria-label="Hive Builder tab"
-            >
-              🐝 <span className="gradient-text">Hive Builder</span>
-            </button>
+        <div className="px-4 py-2 border-b border-surface-border flex items-center justify-between bg-surface-card">
+          <div className="flex items-center gap-3">
+            <a href="/" title="Back to ArcBot">
+              <img src="/logo.svg" className="w-8 h-8" alt="ArcBot" />
+            </a>
+            <span className="font-heading font-semibold text-text-emphasis">ArcBot</span>
+            <span className="text-text-muted">/</span>
+            <span className="font-heading text-text-emphasis">
+              {activeTab === 'map' ? 'Territory Map' : 'Hive Builder'}
+            </span>
           </div>
-
-          <div className="text-sm hidden md:block">
-            {activeTab === 'map' && (
-              <>
-                Aktywny: <span className="text-brand-primary-light font-semibold">
-                  {alliances.find(a => a.id === activeAllianceId)?.name}
-                </span>
-              </>
-            )}
+          <div className="flex items-center gap-3">
+            <a href="/" className="text-text-muted hover:text-text-emphasis text-sm no-underline">
+              &larr; Back to ArcBot
+            </a>
+            <UserMenu />
           </div>
         </div>
 
@@ -1174,11 +1172,6 @@ const allianceScores = calculateAllianceScores();
               <h2 className="text-xl font-bold">Territory Map</h2>
               <p className="text-sm text-text-muted">
                 {getTotalRegions()} regions assigned
-              </p>
-              <p className="text-xs text-gray-500 mt-1">
-                Created by <span className="text-accent-orange font-semibold">aRczi from #49</span>
-                <span className="text-gray-600 mx-1">•</span>
-                Discord: <span className="text-accent-purple font-medium">.arczi.</span>
               </p>
             </div>
             <div className="hidden md:flex items-center gap-1">
@@ -1338,19 +1331,24 @@ const allianceScores = calculateAllianceScores();
                             {region.number}
                           </text>
                           {/* BUFF ICON */}
-                          {PERMANENT_BUFFS[region.id] && (
-                            <text
-                              x={centerX + 5}
-                              y={centerY - (regionColors[region.id] ? 10 : 0)}
-                              className="pointer-events-none"
-                              style={{
-                                fontSize: '16px',
-                                filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.8))',
-                              }}
-                            >
-                              {AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[region.id])?.icon}
-                            </text>
-                          )}
+                          {PERMANENT_BUFFS[region.id] && (() => {
+                            const buff = AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[region.id]);
+                            if (!buff) return null;
+                            const iconX = centerX + 5;
+                            const iconY = centerY - (regionColors[region.id] ? 10 : 0);
+                            return (
+                              <g transform={`translate(${iconX - 7}, ${iconY - 7})`} className="pointer-events-none">
+                                <path
+                                  d={getBuffIconPath(buff.category)}
+                                  fill="none"
+                                  stroke="rgba(255,255,255,0.8)"
+                                  strokeWidth="0.8"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </g>
+                            );
+                          })()}
                           {regionColors[region.id] && (
                             <text
                               x={centerX}
@@ -1409,12 +1407,12 @@ const allianceScores = calculateAllianceScores();
 
           <div className="p-3 border-t border-surface-border bg-gray-850 text-xs text-text-muted">
             <div className="flex gap-4 justify-center flex-wrap">
-              <span className="md:hidden">📌 Tap territory to assign • Double-tap map to reset zoom</span>
-              <span className="hidden md:inline">💡 Click on territory to assign it to the active alliance</span>
-              <span className="hidden md:inline">💡 Click again to remove</span>
-              <span className="hidden md:inline">💡 Hover to highlight</span>
+              <span className="md:hidden">Tap territory to assign &bull; Double-tap map to reset zoom</span>
+              <span className="hidden md:inline">&bull; Click on territory to assign it to the active alliance</span>
+              <span className="hidden md:inline">&bull; Click again to remove</span>
+              <span className="hidden md:inline">&bull; Hover to highlight</span>
               {isEditingCenters && (
-                  <span className="text-yellow-400 font-bold">⚠️ TRYB EDYCJI: Kliknij mapę, aby ustawić pozycję numeru. Złoty punkt oznacza pozycję zapisaną ręcznie.</span>
+                  <span className="text-yellow-400 font-bold">EDIT MODE: Click map to set number position. Gold dot = manual override.</span>
               )}
               
             </div>
@@ -1441,14 +1439,8 @@ const allianceScores = calculateAllianceScores();
         >
           <div className="p-6 border-b border-surface-border flex justify-between items-start">
             <div>
-              <h1 className="text-2xl font-bold mb-2 gradient-text">Alliance Map Manager</h1>
+              <h1 className="text-2xl font-heading font-bold mb-2 text-text-emphasis">Alliance Map Manager</h1>
               <p className="text-sm text-text-muted">Strategic Map Control</p>
-              <p className="text-xs text-text-muted mt-2">
-                © 2025 Created by <span className="text-accent-orange font-semibold">aRczi from #49</span>
-              </p>
-              <p className="text-xs text-text-muted mt-1">
-                Discord: <span className="text-accent-purple font-medium">.arczi.</span>
-              </p>
             </div>
 
             <button
@@ -1712,8 +1704,17 @@ const allianceScores = calculateAllianceScores();
             
             {PERMANENT_BUFFS[selectedRegionForBuff] ? (
               <div className="mb-4">
-                <div className="text-3xl mb-2 text-center">
-                  {AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[selectedRegionForBuff])?.icon}
+                <div className="flex justify-center">
+                  <svg width="40" height="40" viewBox="0 0 14 14" className="text-accent-purple" style={{ filter: 'drop-shadow(0 0 4px rgba(155,48,255,0.4))' }}>
+                    <path
+                      d={getBuffIconPath(AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[selectedRegionForBuff])!.category)}
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </div>
                 <div className="text-base font-semibold text-center text-brand-primary-light">
                   {AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[selectedRegionForBuff])?.name}

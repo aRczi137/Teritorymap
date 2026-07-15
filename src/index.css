@@ -39,6 +39,75 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+.font-heading {
+  font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+}
+
+/* Utility classes matching ArcBot design tokens */
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--surface-border);
+  color: var(--text-muted);
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-ghost:hover {
+  background: var(--surface-hover);
+  color: var(--text-emphasis);
+}
+
+.card {
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+.btn-primary {
+  background: linear-gradient(to right, #FF6B2C, #9B30FF);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.gradient-text {
+  background: linear-gradient(to right, #FF6B2C, #9B30FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.input-field {
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  color: var(--text-emphasis);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.input-field:focus {
+  border-color: var(--accent-purple);
+}
+
 html, body, #root {
   padding-top: var(--sat);
   padding-bottom: var(--sab);
@@ -90,21 +159,4 @@ html, body, #root {
   scrollbar-color: rgba(255, 255, 255, 0.15) rgba(255, 255, 255, 0.03);
 }
 
-/* Brand utility classes */
-@layer utilities {
-  .btn-primary {
-    background: linear-gradient(to right, #FF6B2C, #9B30FF);
-    transition: opacity 150ms ease;
-  }
 
-  .btn-primary:hover {
-    opacity: 0.9;
-  }
-
-  .gradient-text {
-    background: linear-gradient(to right, #FF6B2C, #9B30FF);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-}

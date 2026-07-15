@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { Pencil, Plus, X, Check, ChevronUp, ChevronDown } from 'lucide-react';
 import type { DragSource, DragState, GridPosition, PlayerLevel } from './types';
 import { PLAYER_LEVELS, LEVEL_COLORS } from './types';
 import { useFrankyLayout } from './useFrankyLayout';
@@ -470,7 +471,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
           }}
         >
           TOOLS
-          <span style={{ fontSize: 9 }}>{toolsOpen ? '▲' : '▼'}</span>
+          {toolsOpen ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
         </button>
         {toolsOpen && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
@@ -571,7 +572,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
           }}
         >
           PLAYERS ({players.length})
-          <span style={{ fontSize: 9 }}>{panelOpen ? '▲' : '▼'}</span>
+          {panelOpen ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
         </button>
 
         {panelOpen && (
@@ -631,7 +632,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
               cursor: playerNameInput.trim() ? 'pointer' : 'default',
             }}
           >
-            +
+            <Plus size={14} />
           </button>
         </div>
         {/* List of players */}
@@ -665,8 +666,8 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
                       gap: 4,
                       padding: '4px 6px',
                       borderRadius: 5,
-                      background: 'rgba(59,130,246,0.1)',
-                      border: '1px solid rgba(59,130,246,0.3)',
+                      background: 'rgba(155,48,255,0.1)',
+                      border: '1px solid rgba(155,48,255,0.3)',
                     }}
                   >
                     <input
@@ -728,7 +729,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
                         padding: 0,
                       }}
                     >
-                      ✓
+                      <Check size={12} />
                     </button>
                     <button
                       type="button"
@@ -743,13 +744,12 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
                         background: 'transparent',
                         border: 'none',
                         color: '#ef4444',
-                        fontSize: 12,
                         cursor: 'pointer',
                         flexShrink: 0,
                         padding: 0,
                       }}
                     >
-                      ×
+                      <X size={12} />
                     </button>
                   </div>
                 );
@@ -796,10 +796,10 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
                       flexShrink: 0,
                       padding: 0,
                     }}
-                    onMouseEnter={(e) => { (e.target as HTMLElement).style.color = '#3b82f6'; }}
+                    onMouseEnter={(e) => { (e.target as HTMLElement).style.color = '#9B30FF'; }}
                     onMouseLeave={(e) => { (e.target as HTMLElement).style.color = '#666'; }}
                   >
-                    ✎
+                    <Pencil size={10} />
                   </button>
                   {/* Place on grid button — only visible when not placed */}
                   {!isPlaced && (
@@ -825,7 +825,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
                         fontWeight: 700,
                       }}
                     >
-                      +
+                      <Plus size={14} />
                     </button>
                   )}
                   <button
@@ -851,7 +851,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
                     onMouseEnter={(e) => { (e.target as HTMLElement).style.color = '#ef4444'; }}
                     onMouseLeave={(e) => { (e.target as HTMLElement).style.color = '#666'; }}
                   >
-                    ×
+                    <X size={12} />
                   </button>
                 </div>
               );

@@ -36,8 +36,8 @@ const ZOOM_MIN = 0.2;
 const ZOOM_MAX = 4;
 
 // Grid line color
-const GRID_LINE_COLOR = '#2a2a4a';
-const GRID_BG_COLOR = '#1a1a2e';
+const GRID_LINE_COLOR = '#2a2a3a';
+const GRID_BG_COLOR = '#111118';
 
 function computeDropPosition(
   clientX: number,

@@ -26,25 +26,28 @@ export function UserMenu() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white/5 transition-colors"
+        className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-surface-hover transition-colors"
       >
         {avatarUrl ? (
           <img src={avatarUrl} alt="" className="w-6 h-6 rounded-full" />
         ) : (
-          <div className="w-6 h-6 rounded-full bg-[#5865F2] flex items-center justify-center text-white text-xs font-bold">
+          <div
+            className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
+            style={{ background: 'linear-gradient(to right, #FF6B2C, #9B30FF)' }}
+          >
             {user.username.charAt(0).toUpperCase()}
           </div>
         )}
-        <span className="text-gray-200 text-sm font-medium max-w-[120px] truncate">
+        <span className="text-text-emphasis text-sm font-medium max-w-[120px] truncate">
           {user.username}
         </span>
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 bg-[#1a1a24] border border-[#2a2a3a] rounded-lg py-1 min-w-[140px] z-50 shadow-xl">
+        <div className="absolute right-0 top-full mt-1 bg-surface-card border border-surface-border rounded-lg py-1 min-w-[140px] z-50 shadow-xl">
           <button
             onClick={() => { setOpen(false); logout(); }}
-            className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-white/5 transition-colors"
+            className="w-full text-left px-3 py-2 text-sm text-text-muted hover:bg-surface-hover hover:text-text-emphasis transition-colors"
           >
             Logout
           </button>
