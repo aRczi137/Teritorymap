@@ -14,5 +14,9 @@ function AuthRouter() {
   const { user, isLoading } = useAuth();
   if (isLoading) return <LoadingScreen />;
   if (!user) return <LoginPage />;
-  return <AllianceMapManager userId={user.id} />;
+
+  const params = new URLSearchParams(window.location.search);
+  const initialTab = (params.get('tab') === 'hive') ? 'frankenstein' as const : 'map' as const;
+
+  return <AllianceMapManager userId={user.id} initialTab={initialTab} />;
 }

@@ -395,10 +395,10 @@ const SCROLL_ZOOM_FACTOR = 1.15;
 const SCROLL_DEBOUNCE_MS = 150;
 
  // Dodajemy typ z userId prop
-const AllianceMapManager: React.FC<{ userId: string }> = ({ userId }) => {
+const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frankenstein' }> = ({ userId, initialTab = 'map' }) => {
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const [activeTab, setActiveTab] = useState<'map' | 'frankenstein'>('map');
+  const [activeTab, setActiveTab] = useState<'map' | 'frankenstein'>(initialTab);
   // === TYPOWANIE STANÓW ===
   const [alliances, setAlliances] = useState<Alliance[]>([
     { id: 1, name: 'KNS', color: '#e67e22' },
