@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, Trash2, RotateCcw, Menu, X, Settings, Download, ClipboardCopy, Undo2, Redo2 } from 'lucide-react';
+import { Plus, Trash2, RotateCcw, Menu, X, Settings, Download, ClipboardCopy, Undo2, Redo2, TreePine, Zap, Diamond, Swords, Home, Users, FlaskConical } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { FrankensteinEventTab } from './frankenstein/FrankensteinEventTab';
 import { trackMapExport } from './analytics';
 import { db } from './firebaseConfig';
@@ -46,40 +47,19 @@ interface Buff {
 // --- KONFIGURACJA DEWELOPERSKA ---
 const DEBUG_MODE_ENABLED = false;
 
-// --- BUFF ICON DEFINITIONS (24×24 viewBox, Feather-style paths) ---
-const BUFF_ICONS: Record<string, { color: string; path: string }> = {
-  wood: {
-    color: '#22c55e',
-    path: 'M12 2S7 6 7 12c0 4 5 10 5 10s5-6 5-10c0-6-5-10-5-10z',
-  },
-  electricity: {
-    color: '#eab308',
-    path: 'M13 2L3 14h6l-2 8 10-12h-6l2-8Z',
-  },
-  iron: {
-    color: '#94a3b8',
-    path: 'M12 2l8 10-8 10-8-10 8-10z',
-  },
-  combat: {
-    color: '#ef4444',
-    path: 'M12 3v18M3 12h18M9 9l6 6M15 9l-6 6',
-  },
-  building: {
-    color: '#a855f7',
-    path: 'M3 10l9-7 9 7v10a2 2 0 01-2 2H5a2 2 0 01-2-2V10z',
-  },
-  training: {
-    color: '#3b82f6',
-    path: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14c-3.3 0-6 2.2-6 5v3h12v-3c0-2.8-2.7-5-6-5z',
-  },
-  research: {
-    color: '#f97316',
-    path: 'M9 3v7L3 20h18L15 10V3z',
-  },
+// --- BUFF ICON MAPPING (lucide-react) ---
+const BUFF_ICON_MAP: Record<string, { Icon: LucideIcon; color: string }> = {
+  wood:        { Icon: TreePine, color: '#22c55e' },
+  electricity: { Icon: Zap, color: '#eab308' },
+  iron:        { Icon: Diamond, color: '#94a3b8' },
+  combat:      { Icon: Swords, color: '#ef4444' },
+  building:    { Icon: Home, color: '#a855f7' },
+  training:    { Icon: Users, color: '#3b82f6' },
+  research:    { Icon: FlaskConical, color: '#f97316' },
 };
 
-function getBuffIconDef(category: Buff['category']) {
-  return BUFF_ICONS[category] || BUFF_ICONS.wood;
+function getBuffIcon(category: Buff['category']) {
+  return BUFF_ICON_MAP[category] || BUFF_ICON_MAP.wood;
 }
 
 // --- LISTA DOSTĘPNYCH BUFÓW ---
@@ -1341,14 +1321,14 @@ const allianceScores = calculateAllianceScores();
                           {PERMANENT_BUFFS[region.id] && (() => {
                             const buff = AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[region.id]);
                             if (!buff) return null;
-                            const def = getBuffIconDef(buff.category);
+                            const { Icon, color } = getBuffIcon(buff.category);
                             const iconX = centerX + 14;
                             const iconY = centerY - 14;
                             return (
-                              <g transform={`translate(${iconX - 7}, ${iconY - 7})`} className="pointer-events-none">
-                                <circle cx="7" cy="7" r="7" fill="rgba(0,0,0,0.6)" stroke="rgba(255,255,255,0.2)" strokeWidth="0.5" />
-                                <g transform="scale(0.52) translate(2, 2)">
-                                  <path d={def.path} fill={def.color} stroke="none" />
+                              <g transform={`translate(${iconX - 9}, ${iconY - 9})`} className="pointer-events-none">
+                                <circle cx="9" cy="9" r="9" fill="rgba(0,0,0,0.6)" stroke="rgba(255,255,255,0.2)" strokeWidth="0.5" />
+                                <g transform="translate(2, 2)">
+                                  <Icon color={color} size={14} strokeWidth={2.5} />
                                 </g>
                               </g>
                             );
@@ -1708,14 +1688,13 @@ const allianceScores = calculateAllianceScores();
             
             {PERMANENT_BUFFS[selectedRegionForBuff] ? (() => {
               const buff = AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[selectedRegionForBuff])!;
-              const def = getBuffIconDef(buff.category);
+              const { Icon, color } = getBuffIcon(buff.category);
               return (
                 <div className="mb-4">
                   <div className="flex justify-center">
-                    <svg width="48" height="48" viewBox="0 0 24 24" style={{ filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.5))' }}>
-                      <circle cx="12" cy="12" r="12" fill="rgba(0,0,0,0.5)" />
-                      <path d={def.path} fill={def.color} />
-                    </svg>
+                    <div className="w-12 h-12 rounded-full bg-black/40 flex items-center justify-center" style={{ border: `2px solid ${color}` }}>
+                      <Icon color={color} size={28} strokeWidth={2} />
+                    </div>
                   </div>
                   <div className="text-base font-semibold text-center text-brand-primary-light mt-2">
                     {buff.name}
