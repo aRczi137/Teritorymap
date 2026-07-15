@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { signInWithCustomToken } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 import { exchangeCode, getFirebaseToken } from './api';
-import { CALLBACK_PATH } from './basePath';
+import { BASE_PATH, CALLBACK_PATH } from './basePath';
 
 export function OAuthCallback() {
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +42,7 @@ export function OAuthCallback() {
         await signInWithCustomToken(auth, fbToken);
         if (cancelled) return;
 
-        window.location.replace('/');
+        window.location.replace(BASE_PATH);
       } catch (err) {
         if (!cancelled) {
           const message = err instanceof Error ? err.message : String(err);
@@ -72,7 +72,7 @@ export function OAuthCallback() {
         <div className="bg-[#1a1a24] border border-[#2a2a3a] rounded-lg p-6 max-w-sm w-full text-center">
           <p className="text-red-400 mb-4">{error}</p>
           <button
-            onClick={() => { window.location.href = '/'; }}
+            onClick={() => { window.location.href = BASE_PATH; }}
             className="px-4 py-2 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-lg font-medium"
           >
             Retry
