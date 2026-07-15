@@ -27,6 +27,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlToken = urlParams.get('token');
+
+    if (urlToken) {
+      localStorage.setItem(SESSION_KEY, urlToken);
+      const cleanUrl = window.location.pathname + '?tab=' + (urlParams.get('tab') || 'map');
+      window.history.replaceState(null, '', cleanUrl);
+    }
+
     const sessionId = localStorage.getItem(SESSION_KEY);
     if (!sessionId) {
       setIsLoading(false);
