@@ -46,26 +46,40 @@ interface Buff {
 // --- KONFIGURACJA DEWELOPERSKA ---
 const DEBUG_MODE_ENABLED = false;
 
-// --- BUFF ICON SVG PATHS (14×14 viewBox) ---
-function getBuffIconPath(category: Buff['category']): string {
-  switch (category) {
-    case 'wood':
-      return 'M7 2L9 6L8 6L8 12L6 12L6 6L5 6Z';
-    case 'electricity':
-      return 'M7.5 1L3 6.5H6.5L5 12L9.5 6H6.5Z';
-    case 'iron':
-      return 'M7 0.5L10.5 7L7 13.5L3.5 7Z';
-    case 'combat':
-      return 'M3 1L11 13M11 1L3 13';
-    case 'building':
-      return 'M1 7L7 1L13 7M3 7V13H11V7';
-    case 'training':
-      return 'M7 1A3 3 0 0 0 7 7A3 3 0 0 0 7 1M3 13V8H11V13';
-    case 'research':
-      return 'M5 1V5L1 13H13L9 5V1Z';
-    default:
-      return '';
-  }
+// --- BUFF ICON DEFINITIONS (24×24 viewBox, Feather-style paths) ---
+const BUFF_ICONS: Record<string, { color: string; path: string }> = {
+  wood: {
+    color: '#22c55e',
+    path: 'M12 2S7 6 7 12c0 4 5 10 5 10s5-6 5-10c0-6-5-10-5-10z',
+  },
+  electricity: {
+    color: '#eab308',
+    path: 'M13 2L3 14h6l-2 8 10-12h-6l2-8Z',
+  },
+  iron: {
+    color: '#94a3b8',
+    path: 'M12 2l8 10-8 10-8-10 8-10z',
+  },
+  combat: {
+    color: '#ef4444',
+    path: 'M12 3v18M3 12h18M9 9l6 6M15 9l-6 6',
+  },
+  building: {
+    color: '#a855f7',
+    path: 'M3 10l9-7 9 7v10a2 2 0 01-2 2H5a2 2 0 01-2-2V10z',
+  },
+  training: {
+    color: '#3b82f6',
+    path: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14c-3.3 0-6 2.2-6 5v3h12v-3c0-2.8-2.7-5-6-5z',
+  },
+  research: {
+    color: '#f97316',
+    path: 'M9 3v7L3 20h18L15 10V3z',
+  },
+};
+
+function getBuffIconDef(category: Buff['category']) {
+  return BUFF_ICONS[category] || BUFF_ICONS.wood;
 }
 
 // --- LISTA DOSTĘPNYCH BUFÓW ---
@@ -1327,16 +1341,15 @@ const allianceScores = calculateAllianceScores();
                           {PERMANENT_BUFFS[region.id] && (() => {
                             const buff = AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[region.id]);
                             if (!buff) return null;
+                            const def = getBuffIconDef(buff.category);
                             const iconX = centerX + 14;
                             const iconY = centerY - 14;
                             return (
                               <g transform={`translate(${iconX - 7}, ${iconY - 7})`} className="pointer-events-none">
-                                <circle cx="7" cy="7" r="6.5" fill="rgba(0,0,0,0.55)" stroke="rgba(255,255,255,0.15)" strokeWidth="0.5" />
-                                <path
-                                  d={getBuffIconPath(buff.category)}
-                                  fill="rgba(255,255,255,0.85)"
-                                  stroke="none"
-                                />
+                                <circle cx="7" cy="7" r="7" fill="rgba(0,0,0,0.6)" stroke="rgba(255,255,255,0.2)" strokeWidth="0.5" />
+                                <g transform="scale(0.52) translate(2, 2)">
+                                  <path d={def.path} fill={def.color} stroke="none" />
+                                </g>
                               </g>
                             );
                           })()}
@@ -1693,25 +1706,23 @@ const allianceScores = calculateAllianceScores();
               Territory #{REGION_DATA.find(r => r.id === selectedRegionForBuff)?.number}
             </h3>
             
-            {PERMANENT_BUFFS[selectedRegionForBuff] ? (
-              <div className="mb-4">
-                <div className="flex justify-center">
-                  <svg width="40" height="40" viewBox="0 0 14 14" className="text-accent-purple" style={{ filter: 'drop-shadow(0 0 4px rgba(155,48,255,0.4))' }}>
-                    <path
-                      d={getBuffIconPath(AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[selectedRegionForBuff])!.category)}
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+            {PERMANENT_BUFFS[selectedRegionForBuff] ? (() => {
+              const buff = AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[selectedRegionForBuff])!;
+              const def = getBuffIconDef(buff.category);
+              return (
+                <div className="mb-4">
+                  <div className="flex justify-center">
+                    <svg width="48" height="48" viewBox="0 0 24 24" style={{ filter: 'drop-shadow(0 0 8px rgba(0,0,0,0.5))' }}>
+                      <circle cx="12" cy="12" r="12" fill="rgba(0,0,0,0.5)" />
+                      <path d={def.path} fill={def.color} />
+                    </svg>
+                  </div>
+                  <div className="text-base font-semibold text-center text-brand-primary-light mt-2">
+                    {buff.name}
+                  </div>
                 </div>
-                <div className="text-base font-semibold text-center text-brand-primary-light">
-                  {AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[selectedRegionForBuff])?.name}
-                </div>
-              </div>
-            ) : (
+              );
+            })() : (
               <div className="mb-4 text-center text-text-muted">
                 No buff assigned to this territory
               </div>
