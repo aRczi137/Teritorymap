@@ -14,6 +14,7 @@ const CELL_SIZE = 40;
 
 interface FrankensteinEventTabProps {
   isActive: boolean;
+  userId: string;
 }
 
 /**
@@ -22,7 +23,7 @@ interface FrankensteinEventTabProps {
  * The grid fills 100% of the available space. Pan with left-mouse drag,
  * zoom with scroll wheel. A "center camera" button sits bottom-right.
  */
-export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
+export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabProps) {
   const {
     players,
     placedPlayers,
@@ -36,7 +37,7 @@ export function FrankensteinEventTab({ isActive }: FrankensteinEventTabProps) {
     moveFranky,
     resetLayout,
     loadLayout,
-  } = useFrankyLayout();
+  } = useFrankyLayout(userId);
 
   // ── Drag state ─────────────────────────────────────────────────────────────
   const [dragState, setDragState] = useState<DragState | null>(null);

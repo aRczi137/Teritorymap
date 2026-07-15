@@ -2,24 +2,18 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Plus, Trash2, RotateCcw, Menu, X, Settings, Download, ClipboardCopy, Undo2, Redo2 } from 'lucide-react';
 import { FrankensteinEventTab } from './frankenstein/FrankensteinEventTab';
 import { trackTabSwitch, trackMapExport } from './analytics';
+import { db } from './firebaseConfig';
+import { doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
+import { UserMenu } from './components/UserMenu';
 
-/* === NOWE IMPORTY FIREBASE (Zakładamy, że masz już utworzony plik src/firebaseConfig.ts) ===
-import { db } from './firebaseConfig'; 
-import { 
-    doc, 
-    onSnapshot, 
-    setDoc, 
-    serverTimestamp, 
-    Unsubscribe 
-} from 'firebase/firestore'; 
+interface TerritoryMapData {
+  alliances: Alliance[];
+  regionColors: Record<string, number>;
+  manualCenterOverrides: Record<string, RegionCenter>;
+  activeAllianceId: number;
+}
 
-// ID dokumentu w kolekcji Firestore, który będzie przechowywał Twoją mapę
-const MAP_DOCUMENT_ID = "mapaGłówna"; 
-// =========================================================================================
-
-
-// === DEFINICJE TYPÓW DLA TYPESCRIPT ===
-*/interface Alliance {
+interface Alliance {
   id: number;
   name: string;
   color: string;
@@ -48,17 +42,6 @@ interface Buff {
   category: 'wood' | 'electricity' | 'iron' | 'combat' | 'building' | 'training' | 'research';
   icon: string;
 }
-/*
-// === NOWY INTERFEJS DANYCH MAPY ZAPISYWANYCH W FIRESTORE ===
-interface MapData {
-    alliances: Alliance[];
-    regionColors: Record<string, number>;
-    manualCenterOverrides: Record<string, RegionCenter>;
-    activeAllianceId: number; 
-    updatedAt?: object; // Używane dla serverTimestamp
-}
-// =========================================================
-*/
 
 // --- KONFIGURACJA DEWELOPERSKA ---
 const DEBUG_MODE_ENABLED = false;
@@ -411,8 +394,8 @@ export function formatDiscordMessage(params: FormatDiscordMessageParams): string
 const SCROLL_ZOOM_FACTOR = 1.15;
 const SCROLL_DEBOUNCE_MS = 150;
 
- // Dodajemy typ React.FC
-const AllianceMapManager: React.FC = () => {
+ // Dodajemy typ z userId prop
+const AllianceMapManager: React.FC<{ userId: string }> = ({ userId }) => {
   const svgRef = useRef<SVGSVGElement>(null);
 
   const [activeTab, setActiveTab] = useState<'map' | 'frankenstein'>('map');
@@ -448,6 +431,70 @@ const AllianceMapManager: React.FC = () => {
   const [historyPosition, setHistoryPosition] = useState<number>(-1);
   const canUndo = historyPosition >= 0;
   const canRedo = historyPosition < history.length - 1;
+
+  // Firestore sync ref
+  const isInitializedRef = useRef(false);
+
+  // Firestore onSnapshot — load map data
+  useEffect(() => {
+    const docRef = doc(db, 'users', userId, 'territory_map', 'main');
+    const unsubscribe = onSnapshot(
+      docRef,
+      (snapshot) => {
+        if (snapshot.metadata.hasPendingWrites) return;
+
+        if (!snapshot.exists()) {
+          isInitializedRef.current = true;
+          return;
+        }
+
+        isInitializedRef.current = true;
+        const data = snapshot.data() as TerritoryMapData;
+
+        if (data.alliances) setAlliances(data.alliances);
+        if (data.regionColors) setRegionColors(data.regionColors);
+        if (data.manualCenterOverrides) setManualCenterOverrides(data.manualCenterOverrides);
+        if (typeof data.activeAllianceId === 'number') setActiveAllianceId(data.activeAllianceId);
+      },
+      (_error) => {
+        // read error — keep localStorage state if available, else defaults
+      }
+    );
+
+    return () => unsubscribe();
+  }, [userId]);
+
+  // Firestore debounced save
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!isInitializedRef.current) return;
+
+    if (saveTimerRef.current !== null) {
+      clearTimeout(saveTimerRef.current);
+    }
+
+    saveTimerRef.current = setTimeout(async () => {
+      saveTimerRef.current = null;
+      try {
+        const payload: TerritoryMapData & { updatedAt: ReturnType<typeof serverTimestamp> } = {
+          alliances,
+          regionColors,
+          manualCenterOverrides,
+          activeAllianceId,
+          updatedAt: serverTimestamp(),
+        };
+        await setDoc(doc(db, 'users', userId, 'territory_map', 'main'), payload);
+      } catch (_err) {
+        // write error — silently fail, data stays in state
+      }
+    }, 1000);
+
+    return () => {
+      if (saveTimerRef.current !== null) {
+        clearTimeout(saveTimerRef.current);
+      }
+    };
+  }, [userId, alliances, regionColors, manualCenterOverrides, activeAllianceId]);
 
   // Color Legend: filter alliances that have at least one territory in regionColors
   const visibleAlliances = alliances.filter(a =>
@@ -517,25 +564,6 @@ const AllianceMapManager: React.FC = () => {
   // const svgRef = useRef<SVGSVGElement>(null);
 
 
-  /*// === FUNKCJA ZAPISU DO FIRESTORE (z debouncingiem) ===
-  const saveMapData = async (data: Omit<MapData, 'updatedAt'>) => {
-    try {
-        const docRef = doc(db, "maps", MAP_DOCUMENT_ID);
-        // Zapisz dane i timestamp serwera
-        await setDoc(docRef, { 
-            ...data, 
-            updatedAt: serverTimestamp() 
-        }, { merge: true }); 
-        
-        // Zapis do sessionStorage pozostawiamy jako backup/cache
-        sessionStorage.setItem('allianceMapData', JSON.stringify(data)); 
-        
-    } catch (error) {
-        console.error("Błąd zapisu danych mapy do Firestore:", error);
-    }
-  };*/
-
-  
   // --- FUNKCJE ZARZĄDZANIA DANYMI ---
   
   // --- A. Funkcje Sojuszy ---
@@ -712,44 +740,11 @@ const AllianceMapManager: React.FC = () => {
     return defaults;
   }, []);
 
-  // === WCZYTANIE DANYCH Z localStorage przy starcie aplikacji ===
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('allianceMapData');
-      if (saved) {
-        const data = JSON.parse(saved);
-        setAlliances(data.alliances || alliances);
-        setRegionColors(data.regionColors || {});
-        setManualCenterOverrides(data.manualCenterOverrides || {});
-        setActiveAllianceId(data.activeAllianceId || 1);
-        console.log("✅ Wczytano mapę z localStorage");
-      }
-    } catch (error) {
-      console.error("❌ Błąd wczytywania danych:", error);
-    }
-  }, []);
+  // === WCZYTANIE DANYCH Z FIRESTORE przy starcie aplikacji ===
+  // Handled by onSnapshot effect above — no localStorage needed
 
-  // === AUTOMATYCZNY ZAPIS DO localStorage (z debouncing) ===
-  useEffect(() => {
-    const dataToSave = {
-      alliances,
-      regionColors,
-      PERMANENT_BUFFS,
-      activeAllianceId,
-      manualCenterOverrides
-    };
-
-    const handler = setTimeout(() => {
-      try {
-        localStorage.setItem('allianceMapData', JSON.stringify(dataToSave));
-        console.log("💾 Zapisano zmiany do localStorage");
-      } catch (error) {
-        console.error("❌ Błąd zapisu danych:", error);
-      }
-    }, 500);
-
-    return () => clearTimeout(handler);
-  }, [alliances, regionColors, activeAllianceId, manualCenterOverrides]);
+  // === AUTOMATYCZNY ZAPIS DO FIRESTORE ===
+  // Handled by debounced setDoc effect above — no localStorage needed
 
   // --- FUNKCJA 3: Użyj defaultów i nadpisz je ręcznymi zmianami (Merge Logic) ---
   useEffect(() => {
@@ -1128,8 +1123,14 @@ const allianceScores = calculateAllianceScores();
 
       {/* Obszar główny: Tabs (mapa + FrankensteinEvent) */}
       <div className="flex-1 flex flex-col bg-surface-card w-full">
+        {/* Header bar */}
+        <div className="px-4 py-2 border-b border-surface-border flex items-center justify-between bg-[#111118]">
+          <h1 className="text-base font-bold text-white tracking-wide">Territory Map</h1>
+          <UserMenu />
+        </div>
+
         {/* Tab header */}
-        <div className="p-4 border-b border-surface-border flex items-center justify-between gap-3">
+        <div className="px-4 py-2 border-b border-surface-border flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <button
               onClick={() => { setActiveTab('map'); trackTabSwitch('map'); }}
@@ -1425,7 +1426,7 @@ const allianceScores = calculateAllianceScores();
           style={{ display: activeTab === 'frankenstein' ? 'flex' : 'none', position: 'relative' }}
           className="flex-1 min-h-0"
         >
-          <FrankensteinEventTab isActive={activeTab === 'frankenstein'} />
+          <FrankensteinEventTab isActive={activeTab === 'frankenstein'} userId={userId} />
         </div>
       </div>
 

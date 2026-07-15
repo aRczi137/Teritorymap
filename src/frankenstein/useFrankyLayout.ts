@@ -308,80 +308,38 @@ export interface FrankyLayoutActions {
 }
 
 // ---------------------------------------------------------------------------
-// Firestore document reference
-// ---------------------------------------------------------------------------
-
-const LAYOUT_DOC_PATH = { collection: 'frankenstein_layouts', id: 'main' } as const;
-const LOCAL_STORAGE_KEY = 'frankenstein_layout_v1';
-
-// ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
 
-export function useFrankyLayout(): FrankyLayoutState & FrankyLayoutActions {
-  // Try to load initial state from localStorage
-  const savedInitial = (() => {
-    try {
-      const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (!raw) return null;
-      const data = JSON.parse(raw);
-      if (data && data.players && data.frankyPosition) {
-        return {
-          ...initialState,
-          players: data.players,
-          placedPlayers: data.placedPlayers || [],
-          frankyPosition: data.frankyPosition,
-          gridConfig: { cols: DEFAULT_COLS, rows: DEFAULT_ROWS },
-        } as FrankyLayoutState;
-      }
-    } catch { /* ignore */ }
-    return null;
-  })();
+export function useFrankyLayout(userId: string): FrankyLayoutState & FrankyLayoutActions {
+  const [state, dispatch] = useReducer(frankyLayoutReducer, initialState);
 
-  const [state, dispatch] = useReducer(frankyLayoutReducer, savedInitial || initialState);
+  const isInitializedRef = useRef(false);
 
-  // Ref to track whether the initial snapshot has been processed.
-  // Used to distinguish "first load" from "subsequent remote updates".
-  const isFirstSnapshotRef = useRef(true);
-
-  // Debounce timer ref for Firestore save
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Ref to track whether the current state change was triggered by an
-  // onSnapshot remote update (to avoid saving back what we just received).
-  const skipNextSaveRef = useRef(false);
-
   // ---------------------------------------------------------------------------
-  // onSnapshot subscription — mount / unmount
+  // onSnapshot subscription
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    const layoutDocRef = doc(db, LAYOUT_DOC_PATH.collection, LAYOUT_DOC_PATH.id);
+    const layoutDocRef = doc(db, 'users', userId, 'hive_layout', 'main');
 
     const unsubscribe = onSnapshot(
       layoutDocRef,
       (snapshot) => {
-        // Skip updates that originate from local writes (pending writes).
-        // metadata.hasPendingWrites === true  → local (optimistic) write, ignore.
-        // metadata.hasPendingWrites === false → confirmed server value, apply.
         if (snapshot.metadata.hasPendingWrites) {
           return;
         }
 
         if (!snapshot.exists()) {
-          // Req 7.4 — no document in Firestore → show empty grid with default Franky
-          if (isFirstSnapshotRef.current) {
-            isFirstSnapshotRef.current = false;
-            // Already at initial state, nothing to do.
-          }
+          isInitializedRef.current = true;
           return;
         }
 
-        isFirstSnapshotRef.current = false;
+        isInitializedRef.current = true;
 
         const data = snapshot.data() as FirestoreLayoutDoc;
 
-        // Req 7.5 — apply remote layout update; tell save debounce to skip this cycle
-        skipNextSaveRef.current = true;
         dispatch({
           type: 'LOAD_LAYOUT',
           layout: {
@@ -393,7 +351,6 @@ export function useFrankyLayout(): FrankyLayoutState & FrankyLayoutActions {
         });
       },
       (_error) => {
-        // Req 7.7 — read error → SET_SAVE_STATUS 'error', show empty grid with default Franky
         dispatch({ type: 'SET_SAVE_STATUS', status: 'error' });
       }
     );
@@ -401,37 +358,27 @@ export function useFrankyLayout(): FrankyLayoutState & FrankyLayoutActions {
     return () => {
       unsubscribe();
     };
-  }, []); // run only on mount
+  }, [userId]);
 
   // ---------------------------------------------------------------------------
-  // Debounced save — triggered whenever layout-relevant state changes
+  // Debounced save
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    // Skip the very first render (state === initialState) and skip saves
-    // that were triggered by a remote onSnapshot to avoid write-loops.
-    if (isFirstSnapshotRef.current) {
+    if (!isInitializedRef.current) {
       return;
     }
 
-    if (skipNextSaveRef.current) {
-      skipNextSaveRef.current = false;
-      return;
-    }
-
-    // Clear any pending save timer (debounce reset — Req 7.1)
     if (saveTimerRef.current !== null) {
       clearTimeout(saveTimerRef.current);
     }
 
-    // Schedule save after 1000 ms of inactivity
     saveTimerRef.current = setTimeout(async () => {
       saveTimerRef.current = null;
 
-      // Req 7.1 / design: dispatch 'saving' before the setDoc call
       dispatch({ type: 'SET_SAVE_STATUS', status: 'saving' });
 
       try {
-        const layoutDocRef = doc(db, LAYOUT_DOC_PATH.collection, LAYOUT_DOC_PATH.id);
+        const layoutDocRef = doc(db, 'users', userId, 'hive_layout', 'main');
 
         const payload: FirestoreLayoutDoc = {
           gridConfig: state.gridConfig,
@@ -443,44 +390,27 @@ export function useFrankyLayout(): FrankyLayoutState & FrankyLayoutActions {
 
         await setDoc(layoutDocRef, payload);
 
-        // Req 7.2 — successful save → 'saved', then after 3 s → 'idle'
         dispatch({ type: 'SET_SAVE_STATUS', status: 'saved' });
         setTimeout(() => {
           dispatch({ type: 'SET_SAVE_STATUS', status: 'idle' });
         }, 3000);
       } catch (_err) {
-        // Req 7.6 — write error → 'error', layout unchanged
         dispatch({ type: 'SET_SAVE_STATUS', status: 'error' });
       }
     }, 1000);
 
-    // Cleanup: cancel pending save if the component unmounts mid-debounce
     return () => {
       if (saveTimerRef.current !== null) {
         clearTimeout(saveTimerRef.current);
       }
     };
   }, [
+    userId,
     state.players,
     state.placedPlayers,
     state.frankyPosition,
     state.gridConfig,
   ]);
-
-  // ---------------------------------------------------------------------------
-  // localStorage auto-save — save on every relevant state change
-  // ---------------------------------------------------------------------------
-  useEffect(() => {
-    try {
-      const data = {
-        players: state.players,
-        placedPlayers: state.placedPlayers,
-        frankyPosition: state.frankyPosition,
-        gridConfig: state.gridConfig,
-      };
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
-    } catch { /* quota exceeded or private mode — ignore */ }
-  }, [state.players, state.placedPlayers, state.frankyPosition, state.gridConfig]);
 
   // ---------------------------------------------------------------------------
   // Actions
