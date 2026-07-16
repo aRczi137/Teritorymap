@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       alert('Discord Client ID not configured. Set VITE_DISCORD_CLIENT_ID in .env');
       return;
     }
-    const redirectUri = encodeURIComponent('https://arcbot.pro/callback');
+    const redirectUri = encodeURIComponent(window.location.origin + '/callback');
     window.location.href = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify+guilds`;
   }, []);
 
