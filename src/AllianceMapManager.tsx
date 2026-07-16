@@ -1126,7 +1126,7 @@ const allianceScores = calculateAllianceScores();
         <>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="fixed top-4 right-4 z-50 p-3 bg-gradient-to-r from-accent-orange to-accent-purple hover:opacity-90 rounded-lg shadow-lg transition md:hidden"
+            className="fixed top-14 right-4 z-50 p-3 bg-gradient-to-r from-accent-orange to-accent-purple hover:opacity-90 rounded-lg shadow-lg transition md:hidden"
           >
             {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
