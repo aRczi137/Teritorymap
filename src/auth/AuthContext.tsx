@@ -2,15 +2,14 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import { signInWithCustomToken, signOut } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 import type { UserInfo } from './api';
-import { getAuthState, getMe, getFirebaseToken, logoutSession } from './api';
-import { CALLBACK_PATH } from './basePath';
+import { getMe, getFirebaseToken, logoutSession } from './api';
 
 const SESSION_KEY = 'session_token';
 
 interface AuthContextValue {
   user: UserInfo | null;
   isLoading: boolean;
-  login: () => Promise<void>;
+  login: () => void;
   logout: () => Promise<void>;
 }
 
@@ -58,16 +57,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true; };
   }, []);
 
-  const login = useCallback(async () => {
-    const state = await getAuthState();
+  // Login redirects through the main ArcBot site's OAuth flow,
+  // which uses the registered redirect_uri https://arcbot.pro/callback.
+  // After login, the user lands on the ArcBot dashboard but the session
+  // token is shared via localStorage. The user can return to Teritorymap
+  // via the ArcBot avatar dropdown (Territory Map / Hive Builder links).
+  const login = useCallback(() => {
     const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
     if (!clientId) {
       alert('Discord Client ID not configured. Set VITE_DISCORD_CLIENT_ID in .env');
       return;
     }
-    const cbPath = CALLBACK_PATH.replace(/\/$/, '');
-    const redirectUri = encodeURIComponent(window.location.origin + cbPath);
-    window.location.href = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify&state=${state}`;
+    const redirectUri = encodeURIComponent('https://arcbot.pro/callback');
+    window.location.href = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify+guilds`;
   }, []);
 
   const logout = useCallback(async () => {
