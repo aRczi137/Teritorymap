@@ -1121,20 +1121,24 @@ const allianceScores = calculateAllianceScores();
         </div>
       )}
 
-      {/* Przycisk Menu - Pozycja stała */}
-      <button
-        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="fixed top-4 right-4 z-50 p-3 bg-gradient-to-r from-accent-orange to-accent-purple hover:opacity-90 rounded-lg shadow-lg transition md:hidden"
-      >
-        {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
-      
-      <div 
-        onClick={() => setIsSidebarOpen(false)}
-        className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 md:hidden 
-          ${isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`
-        }
-      ></div>
+      {/* Przycisk Menu - tylko w Territory Map, nie w Hive Builder */}
+      {activeTab === 'map' && (
+        <>
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="fixed top-4 right-4 z-50 p-3 bg-gradient-to-r from-accent-orange to-accent-purple hover:opacity-90 rounded-lg shadow-lg transition md:hidden"
+          >
+            {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+          
+          <div 
+            onClick={() => setIsSidebarOpen(false)}
+            className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 md:hidden 
+              ${isSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`
+            }
+          ></div>
+        </>
+      )}
 
 
       {/* Obszar główny: Tabs (mapa + FrankensteinEvent) */}
