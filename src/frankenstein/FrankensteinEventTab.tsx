@@ -447,7 +447,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
           border: '1px solid #2a2a3a',
           padding: toolsOpen ? '6px 8px' : '6px 10px',
           boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-          maxWidth: 'calc(100vw - 70px)',
+          maxWidth: toolsOpen ? 'calc(100vw - 290px)' : 'calc(100vw - 280px)',
         }}
         onMouseDown={(e) => e.stopPropagation()}
       >
@@ -546,7 +546,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
           border: '1px solid #2a2a3a',
           padding: panelOpen ? '8px 10px' : '6px 10px',
           boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-          maxWidth: 'min(260px, calc(100vw - 80px))',
+          maxWidth: panelOpen ? 'min(240px, calc(100vw - 140px))' : 'min(200px, calc(100vw - 120px))',
           maxHeight: panelOpen ? 'calc(100vh - 80px)' : 'auto',
           overflow: 'hidden',
         }}
