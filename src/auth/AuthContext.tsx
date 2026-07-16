@@ -57,19 +57,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true; };
   }, []);
 
-  // Login redirects through the main ArcBot site's OAuth flow,
-  // which uses the registered redirect_uri https://arcbot.pro/callback.
-  // After login, the user lands on the ArcBot dashboard but the session
-  // token is shared via localStorage. The user can return to Teritorymap
-  // via the ArcBot avatar dropdown (Territory Map / Hive Builder links).
   const login = useCallback(() => {
     const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
     if (!clientId) {
       alert('Discord Client ID not configured. Set VITE_DISCORD_CLIENT_ID in .env');
       return;
     }
-    const redirectUri = encodeURIComponent(window.location.origin + '/callback');
-    window.location.href = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify+guilds`;
+    const redirectUri = window.location.origin + '/callback';
+    const url = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=identify`;
+    // DEBUG: show the exact URL to diagnose redirect_uri mismatch
+    alert('Redirecting to Discord with:\nredirect_uri = ' + redirectUri + '\n\nClick OK to continue.');
+    window.location.href = url;
   }, []);
 
   const logout = useCallback(async () => {
