@@ -1238,7 +1238,7 @@ const allianceScores = calculateAllianceScores();
           <div ref={mapWrapperRef} className="flex-1 overflow-hidden relative p-2 md:p-6 flex items-center justify-center bg-gray-850">
             <div 
               ref={mapContainerRef}
-              className="relative inline-block touch-none" 
+              className="relative inline-block" 
               style={{ 
                 maxWidth: '100%',
                 transform: `scale(${mapScale}) translate(${mapTranslate.x / mapScale}px, ${mapTranslate.y / mapScale}px)`,
