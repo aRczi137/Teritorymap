@@ -63,6 +63,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       alert('Discord Client ID not configured. Set VITE_DISCORD_CLIENT_ID in .env');
       return;
     }
+    // Save current URL so we can return here after auth
+    sessionStorage.setItem('territorymap_return_url', window.location.pathname + window.location.search);
     // Discord registered URIs:
     //   https://www.arcbot.pro/callback           (for www subdomain)
     //   https://arcbot.pro/teritorymap/callback   (for apex domain)

@@ -42,7 +42,9 @@ export function OAuthCallback() {
         await signInWithCustomToken(auth, fbToken);
         if (cancelled) return;
 
-        window.location.replace(BASE_PATH);
+        const returnUrl = sessionStorage.getItem('territorymap_return_url');
+        sessionStorage.removeItem('territorymap_return_url');
+        window.location.replace(returnUrl || BASE_PATH);
       } catch (err) {
         if (!cancelled) {
           const message = err instanceof Error ? err.message : String(err);
