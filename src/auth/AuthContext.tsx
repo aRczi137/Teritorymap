@@ -63,14 +63,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       alert('Discord Client ID not configured. Set VITE_DISCORD_CLIENT_ID in .env');
       return;
     }
-    // Discord registered URIs:
-    //   https://www.arcbot.pro/callback           (for www subdomain)
-    //   https://arcbot.pro/teritorymap/callback   (for apex domain)
-    // Pick the one that matches the current origin.
-    const isWww = window.location.hostname.startsWith('www.');
-    const redirectUri = isWww
-      ? window.location.origin + '/callback'
-      : window.location.origin + '/teritorymap/callback';
+    // Always use /teritorymap/callback — arcbot.pro redirects to www.arcbot.pro
+    const redirectUri = window.location.origin + '/teritorymap/callback';
     // Encode return URL in OAuth state parameter (survives across redirects)
     const returnUrl = window.location.pathname + window.location.search;
     const state = encodeURIComponent(returnUrl);
