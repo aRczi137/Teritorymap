@@ -63,8 +63,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       alert('Discord Client ID not configured. Set VITE_DISCORD_CLIENT_ID in .env');
       return;
     }
-    // Save current URL so we can return here after auth
-    sessionStorage.setItem('territorymap_return_url', window.location.pathname + window.location.search);
     // Discord registered URIs:
     //   https://www.arcbot.pro/callback           (for www subdomain)
     //   https://arcbot.pro/teritorymap/callback   (for apex domain)
@@ -73,7 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const redirectUri = isWww
       ? window.location.origin + '/callback'
       : window.location.origin + '/teritorymap/callback';
-    window.location.href = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=identify`;
+    // Encode return URL in OAuth state parameter (survives across redirects)
+    const returnUrl = window.location.pathname + window.location.search;
+    const state = encodeURIComponent(returnUrl);
+    window.location.href = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=identify&state=${state}`;
   }, []);
 
   const logout = useCallback(async () => {

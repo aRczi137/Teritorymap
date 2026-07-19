@@ -12,6 +12,9 @@ export function OAuthCallback() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
     const state = params.get('state');
+    // Decode return URL from state parameter (set by login() in AuthContext)
+    const returnUrl = state ? decodeURIComponent(state) : null;
+
     const discordError = params.get('error');
 
     if (discordError) {
@@ -31,7 +34,8 @@ export function OAuthCallback() {
     (async () => {
       try {
         const redirectUri = window.location.origin + CALLBACK_PATH.replace(/\/$/, '');
-        const result = await exchangeCode(code, redirectUri, state ?? undefined);
+        // Don't pass state to API — it's our return URL, not an ArcBot CSRF token
+        const result = await exchangeCode(code, redirectUri);
         if (cancelled) return;
 
         localStorage.setItem('session_token', result.session_id);
@@ -42,8 +46,6 @@ export function OAuthCallback() {
         await signInWithCustomToken(auth, fbToken);
         if (cancelled) return;
 
-        const returnUrl = sessionStorage.getItem('territorymap_return_url');
-        sessionStorage.removeItem('territorymap_return_url');
         window.location.replace(returnUrl || BASE_PATH);
       } catch (err) {
         if (!cancelled) {
