@@ -1555,6 +1555,23 @@ const allianceScores = calculateAllianceScores();
                   </button>
                 )}
               </div>
+              {/* Mobile: Active + Season + Devtools */}
+              <div className="flex md:hidden items-center gap-2 mt-3 flex-wrap">
+                <span className="text-xs text-text-muted">Active:</span>
+                <span className="text-xs font-semibold text-white">{alliances.find(a => a.id === activeAllianceId)?.name || '-'}</span>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => setSeason('s1')} className={`px-2 py-0.5 rounded text-xs font-medium ${season === 's1' ? 'bg-accent-purple text-white' : 'bg-surface-hover text-text-muted'}`}>S1</button>
+                  <button onClick={() => setSeason('s6')} className={`px-2 py-0.5 rounded text-xs font-medium ${season === 's6' ? 'bg-accent-purple text-white' : 'bg-surface-hover text-text-muted'}`}>S6</button>
+                </div>
+                {isAdmin && season === 's6' && (
+                  <button
+                    onClick={() => setDevtoolsOpen(true)}
+                    className="px-2 py-0.5 rounded text-xs font-medium bg-amber-600 text-white"
+                  >
+                    Devtools
+                  </button>
+                )}
+              </div>
             </div>
 
             <button
