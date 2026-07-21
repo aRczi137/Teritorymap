@@ -85,6 +85,16 @@ function darkenHex(hex: string, percent: number): string {
   return '#' + [d(r), d(g), d(b)].map(v => v.toString(16).padStart(2, '0')).join('');
 }
 
+function lightenHex(hex: string, percent: number): string {
+  if (!hex || !hex.startsWith('#') || hex.length < 7) return hex;
+  const h = hex.slice(1);
+  const r = parseInt(h.substr(0, 2), 16);
+  const g = parseInt(h.substr(2, 2), 16);
+  const b = parseInt(h.substr(4, 2), 16);
+  const l = (c: number) => Math.min(255, Math.round(c + (255 - c) * percent / 100));
+  return '#' + [l(r), l(g), l(b)].map(v => v.toString(16).padStart(2, '0')).join('');
+}
+
 // --- LISTA DOSTĘPNYCH BUFÓW ---
 const AVAILABLE_BUFFS: Buff[] = [
   { id: 'wood_output_5', name: '+5% Wood Output/h', category: 'wood', icon: '🪵' },
@@ -922,7 +932,7 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
       const allianceId = regionColors[regionId];
       
       if (lockedRegions.includes(regionId)) {
-        path.style.fill = darkenHex('#c78b58', 30);
+        path.style.fill = darkenHex('#c78b58', 15);
         path.style.fillOpacity = '1';
       } else if (allianceId) {
         const alliance = alliances.find(a => a.id === allianceId);
@@ -933,7 +943,7 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
       } else {
         if (season === 's6') {
           path.style.fill = darkenHex('#c78b58', 15);
-          path.style.fillOpacity = '0.9';
+          path.style.fillOpacity = '1';
         } else {
           path.style.fill = '#d1d5db';
           path.style.fillOpacity = '0.5';
@@ -1510,7 +1520,7 @@ const allianceScores = calculateAllianceScores();
                         onTouchEnd={handleTouchEnd} 
                         style={{
                             fill: season === 's6' ? darkenHex('#c78b58', 15) : '#d1d5db',
-                            fillOpacity: season === 's6' ? 0.9 : 0.5,
+                            fillOpacity: season === 's6' ? 1 : 0.5,
                             stroke: darkenHex('#c78b58', 35), 
                             strokeWidth: 3, 
                             transition: 'all 0.2s', 
@@ -1522,8 +1532,18 @@ const allianceScores = calculateAllianceScores();
                           <title>{regionBuff.name}</title>
                         )}
                       </path>
-                      
-                      {/* TEXT (CYFERKA) */}
+                       
+                       {/* Inner light border for claimed S6 territories */}
+                       {season === 's6' && regionColors[region.id] && (() => {
+                         const a = alliances.find(al => al.id === regionColors[region.id]);
+                         if (!a) return null;
+                         return (
+                           <path d={region.d} fill="none" stroke={lightenHex(a.color, 25)} strokeWidth={3}
+                             strokeLinejoin="round" style={{ pointerEvents: 'none' }} />
+                         );
+                       })()}
+
+                       {/* TEXT (CYFERKA) */}
                         {center && (
                         <>
                           {/* Invisible touch target for devtools drag on mobile */}
