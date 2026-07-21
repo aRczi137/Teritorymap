@@ -9,6 +9,11 @@ service cloud.firestore {
       allow create, update, delete: if request.auth != null
         && request.auth.uid == '524694348269617187';
     }
+    match /territory_map_s6/{docId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.auth.uid == '524694348269617187';
+    }
     match /{document=**} {
       allow read, write: if false;
     }
