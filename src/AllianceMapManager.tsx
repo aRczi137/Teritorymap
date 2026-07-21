@@ -950,8 +950,13 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
         }
       }
       
+      let strokeWidth = '3';
+      if (allianceId && season === 's6') {
+        strokeWidth = '6';
+      }
+      
       path.style.stroke = darkenHex('#c78b58', 35);
-      path.style.strokeWidth = '3';
+      path.style.strokeWidth = strokeWidth;
       path.style.strokeLinejoin = 'round';
       
       if (hoveredRegion === regionId) {
@@ -1491,7 +1496,7 @@ const allianceScores = calculateAllianceScores();
                 <defs>
                   {alliances.map(alliance => (
                     <radialGradient key={alliance.id} id={`alliance-grad-${alliance.id}`} cx="50%" cy="50%" r="70%">
-                      <stop offset="0%" stopColor={darkenHex(alliance.color, 25)} stopOpacity={0.9} />
+                      <stop offset="0%" stopColor={darkenHex(alliance.color, 15)} stopOpacity={0.9} />
                       <stop offset="85%" stopColor={alliance.color} stopOpacity={0.9} />
                     </radialGradient>
                   ))}
@@ -1532,7 +1537,12 @@ const allianceScores = calculateAllianceScores();
                           <title>{regionBuff.name}</title>
                         )}
                       </path>
-                       
+                   
+                       {/* Gradient fill overlay for claimed S6 territories */}
+                       {season === 's6' && regionColors[region.id] && (
+                         <path d={region.d} fill={`url(#alliance-grad-${regionColors[region.id]})`} stroke="none" fillOpacity={1} style={{pointerEvents: 'none'}} />
+                       )}
+
                        {/* Inner light border for claimed S6 territories */}
                        {season === 's6' && regionColors[region.id] && (() => {
                          const a = alliances.find(al => al.id === regionColors[region.id]);
