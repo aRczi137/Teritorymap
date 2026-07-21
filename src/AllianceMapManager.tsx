@@ -894,8 +894,8 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
         path.style.strokeWidth = '2';
         path.style.filter = 'drop-shadow(0 0 6px rgba(255,255,255,0.9))';
       } else {
-        path.style.stroke = '#2F2E31';
-        path.style.strokeWidth = '0.3';
+        path.style.stroke = '#3a3a4a';
+        path.style.strokeWidth = '1';
         path.style.filter = 'none';
       }
     });
@@ -1385,8 +1385,8 @@ const allianceScores = calculateAllianceScores();
                         style={{
                             fill: season === 's6' ? '#9ca3af' : '#d1d5db', 
                             fillOpacity: season === 's6' ? 1 : 0.5, 
-                            stroke: '#2F2E31', 
-                            strokeWidth: 0.3, 
+                            stroke: '#3a3a4a', 
+                            strokeWidth: 1, 
                             transition: 'all 0.2s', 
                             cursor: isEditingCenters || buildingPlacementMode ? 'crosshair' : 'pointer',
                         }} 
