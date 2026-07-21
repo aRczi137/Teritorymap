@@ -1,32 +1,30 @@
-# Changelog — Lipiec 2026
+# Changelog v1.1.0
 
-## Nowa mapa: Season 6 (Fiordy)
+**Territory Map — Season 6**
 
-- Mapa S6 z fiordami — 462 regiony, większa i bardziej szczegółowa
-- Przyciski **S1** / **S6** do przełączania między sezonami na głównej stronie mapy
-- Wybór sezonu zapamiętywany — po odświeżeniu wracasz tam gdzie byłeś
+• New S6 map added — 462 regions with fjord layout, larger and more detailed than S1
+• S1 / S6 buttons to switch between seasons directly on the map header
+• Season selection is saved — you return to the same season after refresh
+• S6 territories show a level number (default 1) instead of the region ID
+• No buffs system on S6 — only Season 1 territories give buffs
+• No 8-territory limit on S6 — alliances can control any number of fields
+• No default alliances on S6 — players add their own from scratch
+• CAP marker removed on S6 map
 
-## Czym różni się S6 od S1
+**Territory Map — Visual**
 
-- **Brak buffów** — terytoria nie dają bonusów (tylko mapa S1 ma system bufów)
-- **Brak limitu terytoriów** — sojusze mogą kontrolować dowolną liczbę pól
-- **Brak domyślnych sojuszy** — zaczynasz od zera, sam dodajesz sojusze
-- **Level terytoriów** — każde pole ma poziom (domyślnie 1), wyświetlany zamiast numeru
+• S6 map has a warmer beige background color
+• Claimed territories show a gradient fill — darker center, lighter edge with the alliance color
+• All regions have thicker, more visible dark brown borders
+• Smaller territories always render on top — not hidden behind larger ones
 
-## Hive Builder: Szablony
+**Hive Builder**
 
-- **Load Template** — ładuj gotowe układy hive z listy szablonów
-- Szablony dostępne dla wszystkich użytkowników
+• Load Template button — browse and load pre-made hive layouts from a shared template list
+• Templates available to all users — pick one and load it onto your board
 
-## Stylizacja mapy
+**Mobile**
 
-- Mapa S6 ma nowe, cieplejsze tło w kolorze beżu
-- Przypisane terytoria mają **gradientowe wypełnienie** (ciemniejszy środek, jaśniejsza obwódka w kolorze sojuszu)
-- Wszystkie pola mają wyraźniejsze, grubsze **ciemnobrązowe obramowanie**
-- Mniejsze terytoria zawsze widoczne na wierzchu — nie są zasłaniane przez większe
-
-## Ulepszenia mobilne
-
-- Panel toolsów nie jest zasłaniany przez panel graczy
-- Szerszy panel graczy — nie ucina wyboru poziomu wieży
-- Przyciski S1/S6 widoczne od razu na ekranie mapy
+• Tools panel no longer overlapped by the player panel
+• Wider player panel — tower level dropdown no longer gets clipped
+• S1/S6 season buttons visible immediately on the map screen
