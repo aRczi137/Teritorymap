@@ -1180,10 +1180,20 @@ const allianceScores = calculateAllianceScores();
                 >
                   <Redo2 size={16} />
                 </button>
+                <a
+                  href="/teritorymap/v4/"
+                  className="ml-2 px-2 py-1 rounded text-xs font-medium bg-surface-hover hover:bg-surface-hover/80 text-gray-200 border border-surface-border hover:border-[rgba(155,48,255,0.4)] transition-colors duration-150 no-underline"
+                  title="Season 1 (OPESCO)"
+                >
+                  Season 1
+                </a>
               </div>
             )}
           </div>
           <div className="flex items-center gap-3">
+            <a href="/teritorymap/v4/" className="text-text-muted hover:text-text-emphasis text-sm no-underline md:hidden" title="Season 1 (OPESCO)">
+              S1
+            </a>
             <a href="/" className="text-text-muted hover:text-text-emphasis text-sm no-underline">
               &larr; Back to ArcBot
             </a>
