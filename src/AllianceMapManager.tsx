@@ -899,7 +899,21 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
         path.style.filter = 'none';
       }
     });
-  }, [regionColors, alliances, hoveredRegion, REGION_DATA]);
+    }, [regionColors, alliances, hoveredRegion, REGION_DATA, season]);
+
+  // Sort regions by area (smallest last = rendered on top)
+  const sortedRegionData = React.useMemo(() => {
+    return [...REGION_DATA].sort((a, b) => {
+      const area = (r: RegionData) => {
+        const nums = r.d.match(/[\d.]+/g)?.map(Number) || [];
+        if (nums.length < 4) return 0;
+        const xs = nums.filter((_, i) => i % 2 === 0);
+        const ys = nums.filter((_, i) => i % 2 === 1);
+        return (Math.max(...xs) - Math.min(...xs)) * (Math.max(...ys) - Math.min(...ys));
+      };
+      return area(a) - area(b);
+    });
+  }, [REGION_DATA]);
 
   // --- Handlery ---
   const handlePathClick = (e: React.MouseEvent<SVGPathElement>) => {
@@ -1346,7 +1360,7 @@ const allianceScores = calculateAllianceScores();
                   }
                 }} 
               >
-                {REGION_DATA.map(region => {
+                {sortedRegionData.map(region => {
                   const center = regionCenters[region.id];
                   const levelPos = season === 's6' ? (levelPositions[region.id] || center) : center;
                   const regionIsHovered = hoveredRegion === region.id;
