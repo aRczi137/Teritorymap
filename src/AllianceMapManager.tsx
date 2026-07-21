@@ -1480,6 +1480,29 @@ const allianceScores = calculateAllianceScores();
                       {/* TEXT (CYFERKA) */}
                         {center && (
                         <>
+                          {/* Invisible touch target for devtools drag on mobile */}
+                          {devtoolsOpen && isAdmin && season === 's6' && (
+                            <rect
+                              x={centerX - 20} y={centerY - 24}
+                              width={40} height={40}
+                              fill="transparent"
+                              style={{ cursor: 'grab' }}
+                              onMouseDown={(e) => {
+                                e.stopPropagation();
+                                const pos = levelPositions[region.id] || regionCenters[region.id];
+                                if (!pos) return;
+                                setDraggingLevel({ regionId: region.id, startX: e.clientX, startY: e.clientY, origX: pos.x, origY: pos.y });
+                              }}
+                              onTouchStart={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                const t = e.touches[0];
+                                const pos = levelPositions[region.id] || regionCenters[region.id];
+                                if (!pos) return;
+                                setDraggingLevel({ regionId: region.id, startX: t.clientX, startY: t.clientY, origX: pos.x, origY: pos.y });
+                              }}
+                            />
+                          )}
                           <text
                             x={centerX}
                             y={centerY - (regionColors[region.id] ? 8 : 0)}
@@ -1493,6 +1516,7 @@ const allianceScores = calculateAllianceScores();
                               transition: 'font-size 0.2s, fill 0.2s',
                               filter: regionIsHovered ? 'drop-shadow(0 0 5px rgba(0,0,0,0.8))' : (devtoolsOpen && isAdmin && season === 's6' ? 'drop-shadow(0 0 3px rgba(245,158,11,0.6))' : 'none'),
                               cursor: devtoolsOpen && isAdmin && season === 's6' ? 'grab' : undefined,
+                              pointerEvents: devtoolsOpen && isAdmin && season === 's6' ? 'none' : undefined,
                             }}
                             onMouseDown={devtoolsOpen && isAdmin && season === 's6' ? (e) => {
                               e.stopPropagation();
@@ -1646,15 +1670,15 @@ const allianceScores = calculateAllianceScores();
                 <div className="flex items-center gap-1 ml-2">
                   <button onClick={() => setSeason('s1')} className={`px-2 py-0.5 rounded text-xs font-medium ${season === 's1' ? 'bg-accent-purple text-white' : 'bg-surface-hover text-text-muted hover:text-text-emphasis'}`}>S1</button>
                   <button onClick={() => setSeason('s6')} className={`px-2 py-0.5 rounded text-xs font-medium ${season === 's6' ? 'bg-accent-purple text-white' : 'bg-surface-hover text-text-muted hover:text-text-emphasis'}`}>S6</button>
+                  {isAdmin && season === 's6' && (
+                    <button
+                      onClick={() => setDevtoolsOpen(!devtoolsOpen)}
+                      className={`px-2 py-0.5 rounded text-xs font-medium transition ${devtoolsOpen ? 'bg-purple-600 text-white' : 'bg-surface-hover text-text-muted hover:text-text-emphasis'}`}
+                    >
+                      DV
+                    </button>
+                  )}
                 </div>
-                {isAdmin && season === 's6' && (
-                  <button
-                    onClick={() => setDevtoolsOpen(!devtoolsOpen)}
-                    className={`ml-3 px-2 py-0.5 rounded text-xs font-medium transition ${devtoolsOpen ? 'bg-purple-600 text-white border border-purple-400' : 'bg-amber-600 text-white hover:bg-amber-700'}`}
-                  >
-                    {devtoolsOpen ? 'Devtools ON' : 'Devtools'}
-                  </button>
-                )}
               </div>
               {/* Mobile: Active + Season + Devtools */}
               <div className="flex md:hidden items-center gap-2 mt-3 flex-wrap">
