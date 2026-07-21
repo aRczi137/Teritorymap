@@ -7,6 +7,7 @@ import { db } from './firebaseConfig';
 import { doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
 import { UserMenu } from './components/UserMenu';
 import { S6_REGION_DATA } from './data/regionsS6';
+import { DevtoolsModal } from './DevtoolsModal';
 
 interface TerritoryMapData {
   alliances: Alliance[];
@@ -14,6 +15,16 @@ interface TerritoryMapData {
   manualCenterOverrides: Record<string, RegionCenter>;
   activeAllianceId: number;
   season?: 's1' | 's6';
+  territoryLevels?: Record<string, number>;
+  levelPositions?: Record<string, RegionCenter>;
+  buildings?: Building[];
+}
+
+export interface Building {
+  id: string;
+  x: number;
+  y: number;
+  type: string;
 }
 
 interface Alliance {
@@ -21,7 +32,7 @@ interface Alliance {
   name: string;
   color: string;
 }
-interface RegionCenter {
+export interface RegionCenter {
   x: number;
   y: number;
 }
@@ -32,13 +43,14 @@ interface HistoryEntry {
   newAllianceId: number | null;
 }
 
-interface RegionData {
+export interface RegionData {
   id: string;
   number: number;
   d: string;
   x?: number; // Opcjonalne w tablicy REGION_DATA
   y?: number; // Opcjonalne w tablicy REGION_DATA
 }
+
 interface Buff {
   id: string;
   name: string;
@@ -455,19 +467,7 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
     return `${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`;
   }, [season, REGION_DATA]);
   // === TYPOWANIE STANÓW ===
-  const [alliances, setAlliances] = useState<Alliance[]>([
-    { id: 1, name: 'KNS', color: '#e67e22' },
-    { id: 2, name: 'B&B', color: '#1abc9c' },
-    { id: 3, name: 'RBRN', color: '#2ecc71' },
-    { id: 4, name: 'KiSS', color: '#3498db' },
-    { id: 5, name: 'Kiss', color: '#546e7a' },
-    { id: 6, name: 'FSNS', color: '#9b59b6' },
-    { id: 7, name: 'FSNT', color: '#e91e63' },
-    { id: 8, name: 'FOX', color: '#a84300' },
-    { id: 9, name: 'TuSQ', color: '#992d22' },
-    { id: 10, name: 'CHF', color: '#11806a' },
-    { id: 11, name: 'GaRD', color: '#3d5879' }
-  ]);
+  const [alliances, setAlliances] = useState<Alliance[]>([]);
   const [activeAllianceId, setActiveAllianceId] = useState<number>(1);
   const [regionColors, setRegionColors] = useState<Record<string, number>>({});
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
@@ -480,6 +480,12 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
   const [longPressTimer, setLongPressTimer] = useState<number | null>(null);
   const [copyStatus, setCopyStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [territoryLevels, setTerritoryLevels] = useState<Record<string, number>>({});
+  const [levelPositions, setLevelPositions] = useState<Record<string, RegionCenter>>({});
+  const [buildings, setBuildings] = useState<Building[]>([]);
+  const [devtoolsOpen, setDevtoolsOpen] = useState(false);
+  const [buildingPlacementMode, setBuildingPlacementMode] = useState(false);
+  const isAdmin = userId === import.meta.env.VITE_ADMIN_DISCORD_ID;
   
   // Undo/Redo history state
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -511,6 +517,9 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
         if (data.manualCenterOverrides) setManualCenterOverrides(data.manualCenterOverrides);
         if (typeof data.activeAllianceId === 'number') setActiveAllianceId(data.activeAllianceId);
         if (data.season === 's1' || data.season === 's6') setSeason(data.season);
+        if (data.territoryLevels) setTerritoryLevels(data.territoryLevels);
+        if (data.levelPositions) setLevelPositions(data.levelPositions);
+        if (data.buildings) setBuildings(data.buildings);
       },
       (_error) => {
         // read error — keep localStorage state if available, else defaults
@@ -540,6 +549,11 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
           season,
           updatedAt: serverTimestamp(),
         };
+        if (season === 's6') {
+          payload.territoryLevels = territoryLevels;
+          payload.levelPositions = levelPositions;
+          payload.buildings = buildings;
+        }
         await setDoc(doc(db, 'users', userId, 'territory_map', 'main'), payload);
       } catch (_err) {
         // write error — silently fail, data stays in state
@@ -551,7 +565,7 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
         clearTimeout(saveTimerRef.current);
       }
     };
-  }, [userId, alliances, regionColors, manualCenterOverrides, activeAllianceId, season]);
+  }, [userId, alliances, regionColors, manualCenterOverrides, activeAllianceId, season, territoryLevels, levelPositions, buildings]);
 
   // Color Legend: filter alliances that have at least one territory in regionColors
   const visibleAlliances = alliances.filter(a =>
@@ -868,11 +882,11 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
         const alliance = alliances.find(a => a.id === allianceId);
         if (alliance) {
           path.style.fill = alliance.color;
-          path.style.fillOpacity = '0.7';
+          path.style.fillOpacity = season === 's6' ? '1' : '0.7';
         }
       } else {
-        path.style.fill = '#d1d5db';
-        path.style.fillOpacity = '0.5';
+        path.style.fill = season === 's6' ? '#9ca3af' : '#d1d5db';
+        path.style.fillOpacity = season === 's6' ? '1' : '0.5';
       }
       
       if (hoveredRegion === regionId) {
@@ -915,8 +929,8 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
     // Sprawdź ile terytoriów ma aktualnie aktywny sojusz
     const currentCount = Object.values(regionColors).filter(id => id === activeAllianceId).length;
     
-    // Limit 8 terytoriów na sojusz
-    if (currentCount >= 8) {
+    // Limit 8 terytoriów na sojusz (S1 only)
+    if (season !== 's6' && currentCount >= 8) {
       showToast(`${alliances.find(a => a.id === activeAllianceId)?.name} reached max 8 territories!`);
       return; // Nie rób nic więcej
     }
@@ -944,7 +958,7 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
     
     if (regionId) {
       setHoveredRegion(regionId);
-      (e.target as SVGPathElement).style.cursor = isEditingCenters ? 'crosshair' : 'pointer';
+      (e.target as SVGPathElement).style.cursor = (isEditingCenters || buildingPlacementMode) ? 'crosshair' : 'pointer';
     }
   };
 
@@ -954,10 +968,11 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
 
   // Long press handlers for mobile
   const handleTouchStart = (regionId: string) => {
+    if (season === 's6') return;
     const timer = window.setTimeout(() => {
       setSelectedRegionForBuff(regionId);
       setShowBuffModal(true);
-    }, 500); // 500ms for long press
+    }, 500);
     setLongPressTimer(timer);
   };
 
@@ -1090,6 +1105,16 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
     el.addEventListener('wheel', handleWheel, { passive: false });
     return () => el.removeEventListener('wheel', handleWheel);
   }, [handleWheel]);
+
+  // ESC to cancel building placement mode
+  useEffect(() => {
+    if (!buildingPlacementMode) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setBuildingPlacementMode(false);
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [buildingPlacementMode]);
 
   const getBuffsByAlliance = (allianceId: number) => {
   const buffs: Record<string, number> = {};
@@ -1302,9 +1327,19 @@ const allianceScores = calculateAllianceScores();
                 ref={svgRef}
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox={mapViewBox}
-                className={`border-2 rounded-lg bg-gray-500 w-full h-auto md:w-[200%] md:relative md:left-1/2 md:-translate-x-1/2 ${isEditingCenters ? 'cursor-crosshair border-red-500' : 'border-gray-100'}`}
+                className={`border-2 rounded-lg bg-gray-500 w-full h-auto md:w-[200%] md:relative md:left-1/2 md:-translate-x-1/2 ${isEditingCenters || buildingPlacementMode ? 'cursor-crosshair border-red-500' : 'border-gray-100'}`}
+                style={{ backgroundColor: season === 's6' ? '#1f2937' : undefined }}
                 onClick={(e) => {
-                  if (isEditingCenters) {
+                  if (buildingPlacementMode) {
+                    const svg = svgRef.current;
+                    if (!svg) return;
+                    const pt = svg.createSVGPoint();
+                    pt.x = e.clientX;
+                    pt.y = e.clientY;
+                    const svgPoint = pt.matrixTransform(svg.getScreenCTM()!.inverse());
+                    setBuildings(prev => [...prev, { id: crypto.randomUUID(), x: Math.round(svgPoint.x), y: Math.round(svgPoint.y), type: 'default' }]);
+                    setBuildingPlacementMode(false);
+                  } else if (isEditingCenters) {
                     handleMapClickInEditMode(e);
                   } else {
                     handleMapDoubleTap();
@@ -1313,11 +1348,12 @@ const allianceScores = calculateAllianceScores();
               >
                 {REGION_DATA.map(region => {
                   const center = regionCenters[region.id];
+                  const levelPos = season === 's6' ? (levelPositions[region.id] || center) : center;
                   const regionIsHovered = hoveredRegion === region.id;
                   const regionBuff = PERMANENT_BUFFS[region.id] ? AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[region.id]) : null;
                   
-                  const centerX = center ? center.x : 0;
-                  const centerY = center ? center.y : 0;
+                  const centerX = levelPos ? levelPos.x : 0;
+                  const centerY = levelPos ? levelPos.y : 0;
                   
                   const isManuallySet = !!manualCenterOverrides[region.id];
                   
@@ -1333,22 +1369,22 @@ const allianceScores = calculateAllianceScores();
                         onTouchStart={() => handleTouchStart(region.id)}
                         onTouchEnd={handleTouchEnd} 
                         style={{
-                            fill: '#d1d5db', 
-                            fillOpacity: 0.5, 
+                            fill: season === 's6' ? '#9ca3af' : '#d1d5db', 
+                            fillOpacity: season === 's6' ? 1 : 0.5, 
                             stroke: '#2F2E31', 
                             strokeWidth: 0.3, 
                             transition: 'all 0.2s', 
-                            cursor: isEditingCenters ? 'crosshair' : 'pointer',
+                            cursor: isEditingCenters || buildingPlacementMode ? 'crosshair' : 'pointer',
                         }} 
                       >
-                        {/* Tooltip for desktop */}
-                        {regionBuff && (
+                        {/* Tooltip for desktop — S1 only */}
+                        {season !== 's6' && regionBuff && (
                           <title>{regionBuff.name}</title>
                         )}
                       </path>
                       
                       {/* TEXT (CYFERKA) */}
-                       {center && (
+                        {center && (
                         <>
                           <text
                             x={centerX}
@@ -1356,7 +1392,7 @@ const allianceScores = calculateAllianceScores();
                             className="pointer-events-none" 
                             style={{
                               fill: isManuallySet ? '#FFD700' : '#FFFFFF', 
-                              fontSize: regionIsHovered ? '24px' : '20px', 
+                              fontSize: regionIsHovered ? '24px' : (season === 's6' ? '22px' : '20px'), 
                               fontWeight: 'bold',
                               textAnchor: 'middle', 
                               dominantBaseline: 'middle',
@@ -1364,10 +1400,10 @@ const allianceScores = calculateAllianceScores();
                               filter: regionIsHovered ? 'drop-shadow(0 0 5px rgba(0,0,0,0.8))' : 'none',
                             }}
                           >
-                            {region.number}
+                            {season === 's6' ? (territoryLevels[region.id] ?? 1) : region.number}
                           </text>
-                          {/* BUFF ICON */}
-                          {PERMANENT_BUFFS[region.id] && (() => {
+                          {/* BUFF ICON — S1 only */}
+                          {season !== 's6' && PERMANENT_BUFFS[region.id] && (() => {
                             const buff = AVAILABLE_BUFFS.find(b => b.id === PERMANENT_BUFFS[region.id]);
                             if (!buff) return null;
                             const { Icon, color } = getBuffIcon(buff.category);
@@ -1417,9 +1453,19 @@ const allianceScores = calculateAllianceScores();
                   );
                 })}
                 
-                {/* CAP marker */}
-                <rect x="475" y="415" width="150" height="95" fill="#9ea3ad" stroke="#6b7280" strokeWidth="5"/>
-                <text x="550" y="475" textAnchor="middle" fontSize="35" fontWeight="bold" fill="white">CAP</text>
+                {/* Buildings — S6 only */}
+                {season === 's6' && buildings.map(b => (
+                  <circle key={b.id} cx={b.x} cy={b.y} r={6} fill="#f59e0b" stroke="#fff" strokeWidth={1.5} 
+                    style={{ cursor: 'pointer', filter: 'drop-shadow(0 0 4px rgba(245,158,11,0.6))' }} />
+                ))}
+
+                {/* CAP marker — S1 only */}
+                {season !== 's6' && (
+                  <>
+                    <rect x="475" y="415" width="150" height="95" fill="#9ea3ad" stroke="#6b7280" strokeWidth="5"/>
+                    <text x="550" y="475" textAnchor="middle" fontSize="35" fontWeight="bold" fill="white">CAP</text>
+                  </>
+                )}
               </svg>
             </div>
 
@@ -1486,6 +1532,14 @@ const allianceScores = calculateAllianceScores();
                   <button onClick={() => setSeason('s1')} className={`px-2 py-0.5 rounded text-xs font-medium ${season === 's1' ? 'bg-accent-purple text-white' : 'bg-surface-hover text-text-muted hover:text-text-emphasis'}`}>S1</button>
                   <button onClick={() => setSeason('s6')} className={`px-2 py-0.5 rounded text-xs font-medium ${season === 's6' ? 'bg-accent-purple text-white' : 'bg-surface-hover text-text-muted hover:text-text-emphasis'}`}>S6</button>
                 </div>
+                {isAdmin && season === 's6' && (
+                  <button
+                    onClick={() => setDevtoolsOpen(true)}
+                    className="ml-3 px-2 py-0.5 rounded text-xs font-medium bg-amber-600 text-white hover:bg-amber-700"
+                  >
+                    Devtools
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1603,10 +1657,10 @@ const allianceScores = calculateAllianceScores();
 
                       <div className="flex-1">
                         <div className="text-sm text-text-muted">
-                          {getRegionCount(alliance.id)}/8 territories
+                          {getRegionCount(alliance.id)}{season !== 's6' ? '/8' : ''} territories
                         </div>
 
-                        {getRegionCount(alliance.id) >= 8 && (
+                        {season !== 's6' && getRegionCount(alliance.id) >= 8 && (
                           <div className="text-xs text-green-400 font-semibold mt-1">
                             ✓ LIMIT REACHED
                           </div>
@@ -1659,7 +1713,8 @@ const allianceScores = calculateAllianceScores();
               </div>
             </div>
 
-            {/* Alliance Buffs Summary */}
+            {/* Alliance Buffs Summary — S1 only */}
+            {season !== 's6' && (
             <div className="mb-6 p-4 bg-surface-card rounded-lg border border-surface-border">
               <h3 className="text-sm font-semibold mb-3 text-text-muted">Alliance Buffs</h3>
 
@@ -1689,6 +1744,7 @@ const allianceScores = calculateAllianceScores();
                 );
               })}
             </div>
+            )}
 
             {/* Actions */}
             <div className="space-y-2">
@@ -1792,6 +1848,30 @@ const allianceScores = calculateAllianceScores();
             </button>
           </div>
         </div>
+      )}
+
+      {/* Building placement mode indicator */}
+      {buildingPlacementMode && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 bg-amber-600 border border-amber-400 rounded-lg shadow-xl text-sm font-medium text-white">
+          Click on the map to place a building (Esc to cancel)
+        </div>
+      )}
+
+      {/* Devtools Modal — admin only, S6 only */}
+      {isAdmin && season === 's6' && (
+        <DevtoolsModal
+          isOpen={devtoolsOpen}
+          onClose={() => setDevtoolsOpen(false)}
+          regionData={REGION_DATA}
+          territoryLevels={territoryLevels}
+          onLevelChange={(regionId, level) => setTerritoryLevels(prev => ({ ...prev, [regionId]: level }))}
+          levelPositions={levelPositions}
+          onLevelPositionChange={(regionId, pos) => setLevelPositions(prev => ({ ...prev, [regionId]: pos }))}
+          buildings={buildings}
+          onBuildingAdd={() => setBuildingPlacementMode(true)}
+          onBuildingRemove={(id) => setBuildings(prev => prev.filter(b => b.id !== id))}
+          regionCenters={regionCenters}
+        />
       )}
 
     </div>
