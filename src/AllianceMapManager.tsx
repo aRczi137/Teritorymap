@@ -75,6 +75,16 @@ function getBuffIcon(category: Buff['category']) {
   return BUFF_ICON_MAP[category] || BUFF_ICON_MAP.wood;
 }
 
+function lightenHex(hex: string, percent: number): string {
+  if (!hex || !hex.startsWith('#') || hex.length < 7) return hex;
+  const h = hex.slice(1);
+  const r = parseInt(h.substr(0, 2), 16);
+  const g = parseInt(h.substr(2, 2), 16);
+  const b = parseInt(h.substr(4, 2), 16);
+  const l = (c: number) => Math.min(255, Math.round(c + (255 - c) * percent / 100));
+  return '#' + [l(r), l(g), l(b)].map(v => v.toString(16).padStart(2, '0')).join('');
+}
+
 // --- LISTA DOSTĘPNYCH BUFÓW ---
 const AVAILABLE_BUFFS: Buff[] = [
   { id: 'wood_output_5', name: '+5% Wood Output/h', category: 'wood', icon: '🪵' },
@@ -911,20 +921,23 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
         const alliance = alliances.find(a => a.id === allianceId);
         if (alliance) {
           path.style.fill = alliance.color;
-          path.style.fillOpacity = season === 's6' ? '1' : '0.7';
+          path.style.fillOpacity = '0.55';
+          path.style.stroke = lightenHex(alliance.color, 55);
+          path.style.strokeWidth = '2';
+          path.style.strokeLinejoin = 'round';
         }
       } else {
-        path.style.fill = season === 's6' ? '#9ca3af' : '#d1d5db';
-        path.style.fillOpacity = season === 's6' ? '1' : '0.5';
+        path.style.fill = season === 's6' ? '#6b7280' : '#d1d5db';
+        path.style.fillOpacity = season === 's6' ? '0.3' : '0.5';
+        path.style.stroke = '#3a3a4a';
+        path.style.strokeWidth = '1';
       }
       
       if (hoveredRegion === regionId) {
         path.style.stroke = '#ffffff';
-        path.style.strokeWidth = '2';
+        path.style.strokeWidth = '3';
         path.style.filter = 'drop-shadow(0 0 6px rgba(255,255,255,0.9))';
       } else {
-        path.style.stroke = '#3a3a4a';
-        path.style.strokeWidth = '1';
         path.style.filter = 'none';
       }
     });
@@ -1474,8 +1487,8 @@ const allianceScores = calculateAllianceScores();
                         onTouchStart={() => handleTouchStart(region.id)}
                         onTouchEnd={handleTouchEnd} 
                         style={{
-                            fill: season === 's6' ? '#9ca3af' : '#d1d5db', 
-                            fillOpacity: season === 's6' ? 1 : 0.5, 
+                            fill: season === 's6' ? '#6b7280' : '#d1d5db',
+                            fillOpacity: season === 's6' ? 0.3 : 0.5,
                             stroke: '#3a3a4a', 
                             strokeWidth: 1, 
                             transition: 'all 0.2s', 
