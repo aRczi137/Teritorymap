@@ -1338,6 +1338,13 @@ const allianceScores = calculateAllianceScores();
                 >
                   <Redo2 size={16} />
                 </button>
+                <span className="mx-1 w-px h-4 bg-surface-border" />
+                <button onClick={() => setSeason('s1')} className={`px-2 py-0.5 rounded text-xs font-medium ${season === 's1' ? 'bg-accent-purple text-white' : 'bg-surface-hover text-text-muted hover:text-text-emphasis'}`}>S1</button>
+                <button onClick={() => setSeason('s6')} className={`px-2 py-0.5 rounded text-xs font-medium ${season === 's6' ? 'bg-accent-purple text-white' : 'bg-surface-hover text-text-muted hover:text-text-emphasis'}`}>S6</button>
+                {isAdmin && season === 's6' && (
+                  <button onClick={() => setDevtoolsOpen(!devtoolsOpen)}
+                    className={`px-2 py-0.5 rounded text-xs font-medium ${devtoolsOpen ? 'bg-purple-600 text-white' : 'bg-surface-hover text-text-muted hover:text-text-emphasis'}`}>DV</button>
+                )}
               </div>
             )}
           </div>
@@ -1363,6 +1370,10 @@ const allianceScores = calculateAllianceScores();
             <div className="flex items-center gap-1 ml-2">
               <button onClick={() => setSeason('s1')} className={`px-2 py-0.5 rounded text-xs font-medium ${season === 's1' ? 'bg-accent-purple text-white' : 'bg-surface-hover text-text-muted hover:text-text-emphasis'}`}>S1</button>
               <button onClick={() => setSeason('s6')} className={`px-2 py-0.5 rounded text-xs font-medium ${season === 's6' ? 'bg-accent-purple text-white' : 'bg-surface-hover text-text-muted hover:text-text-emphasis'}`}>S6</button>
+              {isAdmin && season === 's6' && (
+                <button onClick={() => setDevtoolsOpen(!devtoolsOpen)}
+                  className={`px-2 py-0.5 rounded text-xs font-medium ${devtoolsOpen ? 'bg-purple-600 text-white' : 'bg-surface-hover text-text-muted'}`}>DV</button>
+              )}
             </div>
             <div className="flex items-center gap-0.5 ml-auto">
               <button
