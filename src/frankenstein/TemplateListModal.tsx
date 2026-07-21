@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { Player, PlacedPlayer, GridPosition, GridConfig } from './types';
 import { fetchTemplates } from './templateService';
+import { LEVEL_COLORS } from './types';
 import type { HiveTemplate } from './types';
 import { trackTemplateLoad } from '../analytics';
 
@@ -157,6 +158,20 @@ export function TemplateListModal({ isOpen, onClose, loadLayout }: TemplateListM
                     {formatDate(t.updatedAt) && ` • ${formatDate(t.updatedAt)}`}
                   </span>
                 </div>
+                {t.placedPlayers.length > 0 && (() => {
+                  const maxX = Math.max(...t.placedPlayers.map(p => p.position.col), 0) + 1;
+                  const maxY = Math.max(...t.placedPlayers.map(p => p.position.row), 0) + 1;
+                  const scale = Math.min(60 / maxX, 60 / maxY, 6);
+                  return (
+                    <svg width={maxX * scale} height={maxY * scale} style={{ flexShrink: 0, marginLeft: 8, borderRadius: 2, background: 'rgba(0,0,0,0.3)' }}>
+                      {t.placedPlayers.map(pp => {
+                        const player = t.players.find(p => p.id === pp.playerId);
+                        const color = player ? (LEVEL_COLORS[player.level] || '#cbd5e1') : '#cbd5e1';
+                        return <rect key={pp.playerId} x={pp.position.col * scale} y={pp.position.row * scale} width={scale} height={scale} fill={color} opacity={0.85} rx={1} />;
+                      })}
+                    </svg>
+                  );
+                })()}
                 <button
                   type="button"
                   onClick={() => handleLoad(t)}

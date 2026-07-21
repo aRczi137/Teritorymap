@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Pencil, Plus, X, Check, ChevronUp, ChevronDown } from 'lucide-react';
-import type { DragSource, DragState, GridPosition, PlayerLevel } from './types';
+import { Pencil, Plus, X, Check, ChevronUp, ChevronDown, Code } from 'lucide-react';
+import type { DragSource, DragState, GridPosition, PlayerLevel, Player, PlacedPlayer } from './types';
 import { PLAYER_LEVELS, LEVEL_COLORS } from './types';
 import { useFrankyLayout } from './useFrankyLayout';
 import GridCanvas from './GridCanvas';
@@ -402,6 +402,29 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
 
   const isAdmin = userId === import.meta.env.VITE_ADMIN_DISCORD_ID;
 
+  // Developer mode
+  const [developerMode, setDeveloperMode] = useState(false);
+  const savedPlayersRef = useRef<{ players: Player[]; placed: PlacedPlayer[] } | null>(null);
+  const toggleDeveloperMode = useCallback(() => {
+    if (developerMode) {
+      if (savedPlayersRef.current) {
+        loadLayout({players:savedPlayersRef.current.players,placedPlayers:savedPlayersRef.current.placed,frankyPosition,gridConfig});
+        savedPlayersRef.current=null;
+      }
+    } else {
+      savedPlayersRef.current={players:[...players],placed:[...placedPlayers]};
+      const np=[],npp=[];
+      for(let j=0;j<100;j++){
+        const id="dev-"+j;
+        np.push({id,name:"Player "+(j+1),level:"I2" as PlayerLevel,color:"#cbd5e1"});
+        npp.push({playerId:id,position:{col:j%10*2,row:~~(j/10)*2}});
+      }
+      loadLayout({players:np,placedPlayers:npp,frankyPosition,gridConfig});
+    }
+    setDeveloperMode(v=>!v);
+  },[developerMode,players,placedPlayers,frankyPosition,gridConfig,loadLayout]);
+
+
   const handleResetConfirm = () => {
     resetLayout();
     setResetModalOpen(false);
@@ -532,6 +555,13 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
             </button>
             <button
               type="button"
+              onClick={toggleDeveloperMode}
+              className={"px-2 py-1 rounded text-xs font-medium " + (developerMode ? "bg-green-700 text-white border-green-500" : "bg-surface-hover hover:bg-surface-hover/80 text-gray-200 border-surface-border") + " border focus:outline-none focus:ring-2 focus:ring-green-400 transition-colors duration-150"}
+            >
+              <span className="flex items-center gap-1"><Code size={12} /> {developerMode ? "Dev ON" : "Dev"}</span>
+            </button>
+            <button
+              type="button"
               onClick={handleImportFromImage}
               disabled={ocrProgress !== null}
               className="px-2 py-1 rounded text-xs font-medium bg-amber-600 hover:bg-amber-500
@@ -541,7 +571,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
             >
               {ocrProgress !== null ? `OCR ${ocrProgress}%` : 'Import from image'}
             </button>
-            {isAdmin && (
+            {(isAdmin || developerMode) && (
               <button
                 type="button"
                 onClick={() => setSaveTemplateModalOpen(true)}
