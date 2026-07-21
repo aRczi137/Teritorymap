@@ -920,15 +920,15 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
       if (allianceId) {
         const alliance = alliances.find(a => a.id === allianceId);
         if (alliance) {
-          path.style.fill = alliance.color;
-          path.style.fillOpacity = '0.55';
-          path.style.stroke = lightenHex(alliance.color, 55);
-          path.style.strokeWidth = '2';
+          path.style.fill = `url(#alliance-grad-${alliance.id})`;
+          path.style.fillOpacity = '1';
+          path.style.stroke = lightenHex(alliance.color, 45);
+          path.style.strokeWidth = '2.5';
           path.style.strokeLinejoin = 'round';
         }
       } else {
-        path.style.fill = season === 's6' ? '#6b7280' : '#d1d5db';
-        path.style.fillOpacity = season === 's6' ? '0.3' : '0.5';
+        path.style.fill = season === 's6' ? '#9ca3af' : '#d1d5db';
+        path.style.fillOpacity = season === 's6' ? '0.2' : '0.5';
         path.style.stroke = '#3a3a4a';
         path.style.strokeWidth = '1';
       }
@@ -1444,7 +1444,7 @@ const allianceScores = calculateAllianceScores();
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox={mapViewBox}
                 className={`border-2 rounded-lg bg-gray-500 w-full h-auto md:w-[200%] md:relative md:left-1/2 md:-translate-x-1/2 ${isEditingCenters || buildingPlacementMode ? 'cursor-crosshair border-red-500' : 'border-gray-100'}`}
-                style={{ backgroundColor: season === 's6' ? '#1f2937' : undefined }}
+                style={{ backgroundColor: season === 's6' ? '#c78b58' : undefined }}
                 onClick={(e) => {
                   if (buildingPlacementMode) {
                     const svg = svgRef.current;
@@ -1464,6 +1464,14 @@ const allianceScores = calculateAllianceScores();
                   }
                 }} 
               >
+                <defs>
+                  {alliances.map(alliance => (
+                    <radialGradient key={alliance.id} id={`alliance-grad-${alliance.id}`} cx="50%" cy="50%" r="60%">
+                      <stop offset="0%" stopColor={alliance.color} stopOpacity={0.8} />
+                      <stop offset="100%" stopColor={lightenHex(alliance.color, 45)} stopOpacity={0.3} />
+                    </radialGradient>
+                  ))}
+                </defs>
                 {sortedRegionData.map(region => {
                   const center = regionCenters[region.id];
                   const levelPos = season === 's6' ? (levelPositions[region.id] || center) : center;
