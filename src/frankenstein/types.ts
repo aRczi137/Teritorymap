@@ -68,6 +68,16 @@ export interface FirestoreLayoutDoc {
 }
 
 /** Predefiniowana paleta 12 kolorów przypisywanych cyklicznie */
+export interface HiveTemplate {
+  id?: string;
+  name: string;
+  gridConfig: GridConfig;
+  players: Player[];
+  placedPlayers: PlacedPlayer[];
+  frankyPosition: GridPosition;
+  updatedAt?: any;
+}
+
 export const PLAYER_COLORS: readonly string[] = [
   '#ef4444', // red-500
   '#3b82f6', // blue-500

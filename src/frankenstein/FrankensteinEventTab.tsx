@@ -9,6 +9,8 @@ import { buildExportFilename } from './exportUtils';
 import { runOcrOnImage, type ParsedPlayer } from './ocrImport';
 import { OcrPreviewModal } from './OcrPreviewModal';
 import { trackOcrImport, trackPlayerAdd, trackHiveExport } from '../analytics';
+import { TemplateListModal } from './TemplateListModal';
+import { SaveTemplateModal } from './SaveTemplateModal';
 
 /** Base cell size used by GridCanvas (must match) */
 const CELL_SIZE = 40;
@@ -395,6 +397,10 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
 
   // ── Reset modal ────────────────────────────────────────────────────────────
   const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [templateModalOpen, setTemplateModalOpen] = useState(false);
+  const [saveTemplateModalOpen, setSaveTemplateModalOpen] = useState(false);
+
+  const isAdmin = userId === import.meta.env.VITE_ADMIN_DISCORD_ID;
 
   const handleResetConfirm = () => {
     resetLayout();
@@ -517,6 +523,16 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
             </button>
             <button
               type="button"
+              onClick={() => setTemplateModalOpen(true)}
+              className="px-2 py-1 rounded text-xs font-medium bg-surface-hover hover:bg-surface-hover/80
+                text-gray-200 border border-surface-border hover:border-[rgba(155,48,255,0.4)]
+                focus:outline-none focus:ring-2 focus:ring-accent-purple
+                transition-colors duration-150"
+            >
+              Load Template
+            </button>
+            <button
+              type="button"
               onClick={handleImportFromImage}
               disabled={ocrProgress !== null}
               className="px-2 py-1 rounded text-xs font-medium bg-amber-600 hover:bg-amber-500
@@ -526,6 +542,18 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
             >
               {ocrProgress !== null ? `OCR ${ocrProgress}%` : 'Import from image'}
             </button>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setSaveTemplateModalOpen(true)}
+                className="px-2 py-1 rounded text-xs font-medium bg-surface-hover hover:bg-surface-hover/80
+                  text-gray-200 border border-purple-600 hover:border-purple-400
+                  focus:outline-none focus:ring-2 focus:ring-accent-purple
+                  transition-colors duration-150"
+              >
+                Save as Template
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -930,6 +958,21 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
           onCancel={handleOcrCancel}
         />
       )}
+
+      <TemplateListModal
+        isOpen={templateModalOpen}
+        onClose={() => setTemplateModalOpen(false)}
+        loadLayout={loadLayout}
+      />
+
+      <SaveTemplateModal
+        isOpen={saveTemplateModalOpen}
+        onClose={() => setSaveTemplateModalOpen(false)}
+        players={players}
+        placedPlayers={placedPlayers}
+        frankyPosition={frankyPosition}
+        gridConfig={gridConfig}
+      />
     </div>
   );
 }

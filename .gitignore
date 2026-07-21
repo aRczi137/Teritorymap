@@ -104,3 +104,7 @@ Thumbs.db
 .cache/
 .parcel-cache/
 .eslintcache
+
+# Pix Agent
+.pi/
+.pi-lens/
