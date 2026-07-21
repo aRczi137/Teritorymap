@@ -68,6 +68,11 @@ export interface FirestoreLayoutDoc {
 }
 
 /** Predefiniowana paleta 12 kolorów przypisywanych cyklicznie */
+export interface GhostSlot {
+  position: GridPosition;
+  level: PlayerLevel;
+}
+
 export interface HiveTemplate {
   id?: string;
   name: string;

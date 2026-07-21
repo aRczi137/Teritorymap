@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Pencil, Plus, X, Check, ChevronUp, ChevronDown, Code } from 'lucide-react';
-import type { DragSource, DragState, GridPosition, PlayerLevel, Player, PlacedPlayer } from './types';
+import type { DragSource, DragState, GridPosition, PlayerLevel, Player, PlacedPlayer, GhostSlot } from './types';
 import { PLAYER_LEVELS, LEVEL_COLORS } from './types';
 import { useFrankyLayout } from './useFrankyLayout';
 import GridCanvas from './GridCanvas';
@@ -8,7 +8,7 @@ import { ResetModal } from './ResetModal';
 import { buildExportFilename } from './exportUtils';
 import { runOcrOnImage, type ParsedPlayer } from './ocrImport';
 import { OcrPreviewModal } from './OcrPreviewModal';
-import { trackOcrImport, trackPlayerAdd, trackHiveExport } from '../analytics';
+import { trackOcrImport, trackPlayerAdd, trackHiveExport, trackTemplateLoad } from '../analytics';
 import { TemplateListModal } from './TemplateListModal';
 import { SaveTemplateModal } from './SaveTemplateModal';
 
@@ -401,10 +401,22 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
   const [saveTemplateModalOpen, setSaveTemplateModalOpen] = useState(false);
 
   const isAdmin = userId === import.meta.env.VITE_ADMIN_DISCORD_ID;
+  const [ghosts, setGhosts] = useState<GhostSlot[]>([]);
 
   // Developer mode
   const [developerMode, setDeveloperMode] = useState(false);
   const savedPlayersRef = useRef<{ players: Player[]; placed: PlacedPlayer[] } | null>(null);
+
+  const handleLoadTemplateGhosts = useCallback((template: { players: Player[]; placedPlayers: PlacedPlayer[] }) => {
+    const slots: GhostSlot[] = template.placedPlayers.map(pp => {
+      const player = template.players.find(p => p.id === pp.playerId);
+      return { position: pp.position, level: player?.level || 'I2' as PlayerLevel };
+    });
+    setGhosts(slots);
+    setTemplateModalOpen(false);
+    if (slots.length > 0) trackTemplateLoad('ghosts');
+  }, []);
+
   const toggleDeveloperMode = useCallback(() => {
     if (developerMode) {
       if (savedPlayersRef.current) {
@@ -451,6 +463,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
         dragState={dragState}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
+      ghosts={ghosts}
         exportRef={exportRef}
         zoom={zoom}
         pan={pan}
@@ -501,7 +514,18 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
           TOOLS
           {toolsOpen ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
         </button>
-        {toolsOpen && (
+        {toolsOpen && ghosts.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            <button
+              type="button"
+              onClick={() => setGhosts([])}
+              className="px-2 py-1 rounded text-xs font-medium bg-red-800 hover:bg-red-700 text-white border border-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors duration-150"
+            >
+              Clear ghosts ({ghosts.length})
+            </button>
+          </div>
+        )}
+        {toolsOpen &&  (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
             <button
               type="button"
@@ -551,7 +575,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
                 focus:outline-none focus:ring-2 focus:ring-accent-purple
                 transition-colors duration-150"
             >
-              Load Template
+
             </button>
             <button
               type="button"
@@ -991,7 +1015,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
       <TemplateListModal
         isOpen={templateModalOpen}
         onClose={() => setTemplateModalOpen(false)}
-        loadLayout={loadLayout}
+        loadLayout={handleLoadTemplateGhosts}
       />
 
       <SaveTemplateModal
