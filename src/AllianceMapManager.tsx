@@ -6,12 +6,14 @@ import { trackMapExport } from './analytics';
 import { db } from './firebaseConfig';
 import { doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
 import { UserMenu } from './components/UserMenu';
+import { S6_REGION_DATA } from './data/regionsS6';
 
 interface TerritoryMapData {
   alliances: Alliance[];
   regionColors: Record<string, number>;
   manualCenterOverrides: Record<string, RegionCenter>;
   activeAllianceId: number;
+  season?: 's1' | 's6';
 }
 
 interface Alliance {
@@ -174,9 +176,39 @@ const PERMANENT_BUFFS: Record<string, string> = {
   'r87': 'wood_output_5',
 };
 
+function computeRegionBounds(regionData: RegionData[]) {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  regionData.forEach(region => {
+    const numbers = region.d.match(/[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?/g);
+    if (!numbers) return;
+    for (let i = 0; i + 1 < numbers.length; i += 2) {
+      const x = parseFloat(numbers[i]);
+      const y = parseFloat(numbers[i + 1]);
+      if (!Number.isNaN(x)) {
+        minX = Math.min(minX, x);
+        maxX = Math.max(maxX, x);
+      }
+      if (!Number.isNaN(y)) {
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y);
+      }
+    }
+  });
+  const padding = 20;
+  return {
+    minX: minX - padding,
+    minY: minY - padding,
+    width: maxX - minX + padding * 2,
+    height: maxY - minY + padding * 2,
+  };
+}
+
 // --- KROK 1: Centralna Tablica Danych Regionów ---
 // Użycie typu RegionData[]
-const REGION_DATA: RegionData[] = [
+const S1_REGION_DATA: RegionData[] = [
   // Dodano ręczne X/Y dla regionów 1, 4, 11 i 14, które były problematyczne
   { id: 'r1', number: 1, d: "M 1105.00 29.00 C 1091.43 29.67 1077.84 30.39 1064.00 30.00 C 1052.45 31.65 1037.57 28.78 1027.08 33.08 C 1023.20 42.96 1021.96 54.06 1011.25 59.25 C 998.44 63.55 1003.64 80.74 1003.00 90.00 C 978.67 90.00 954.33 90.00 930.00 90.00 C 929.69 74.56 931.08 58.67 928.07 43.93 C 917.89 34.01 917.79 22.14 921.00 9.00 C 983.29 9.25 1034.59 8.45 1092.00 8.00 C 1107.86 2.96 1105.45 18.36 1105.00 29.00", x: 976, y: 44 },
   { id: 'r2', number: 1, d: "M 709.00 10.00 C 711.10 7.92 715.15 9.50 718.00 9.00 C 728.75 10.01 740.77 8.48 753.00 9.00 C 754.28 19.65 767.15 25.30 768.00 36.00 C 768.17 50.03 769.63 63.76 769.00 78.00 C 775.99 80.97 782.66 85.63 790.00 88.00 C 786.12 95.39 774.51 101.00 779.78 111.22 C 780.63 122.79 778.98 134.79 781.00 146.00 C 763.33 146.00 745.67 146.00 728.00 146.00 C 726.30 132.89 731.48 117.14 725.25 105.75 C 710.04 92.18 695.70 77.23 680.75 63.25 C 672.54 57.26 666.60 45.36 656.00 45.00 C 641.33 45.00 626.67 45.00 612.00 45.00 C 612.42 33.15 610.23 21.95 611.00 10.00 C 643.67 10.00 676.33 10.00 709.00 10.00", x: 726, y: 66 },
@@ -267,8 +299,7 @@ const REGION_DATA: RegionData[] = [
   // ... (dodaj pozostałe regiony, jeśli ich brakuje)
 ];
 
-// Całkowita liczba regionów (liczba obiektów w REGION_DATA)
-const ALL_REGIONS_COUNT = REGION_DATA.length; 
+// Total region count is computed inside the component from the selected season's data.
 
 // === DISCORD EXPORT FORMATTER ===
 
@@ -415,6 +446,14 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
   const svgRef = useRef<SVGSVGElement>(null);
 
   const [activeTab] = useState<'map' | 'frankenstein'>(initialTab);
+  const [season, setSeason] = useState<'s1' | 's6'>('s6');
+  const REGION_DATA = season === 's1' ? S1_REGION_DATA : S6_REGION_DATA;
+  const ALL_REGIONS_COUNT = REGION_DATA.length;
+  const mapViewBox = React.useMemo(() => {
+    if (season === 's1') return '0 0 1116 910';
+    const bounds = computeRegionBounds(REGION_DATA);
+    return `${bounds.minX} ${bounds.minY} ${bounds.width} ${bounds.height}`;
+  }, [season, REGION_DATA]);
   // === TYPOWANIE STANÓW ===
   const [alliances, setAlliances] = useState<Alliance[]>([
     { id: 1, name: 'KNS', color: '#e67e22' },
@@ -471,6 +510,7 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
         if (data.regionColors) setRegionColors(data.regionColors);
         if (data.manualCenterOverrides) setManualCenterOverrides(data.manualCenterOverrides);
         if (typeof data.activeAllianceId === 'number') setActiveAllianceId(data.activeAllianceId);
+        if (data.season === 's1' || data.season === 's6') setSeason(data.season);
       },
       (_error) => {
         // read error — keep localStorage state if available, else defaults
@@ -497,6 +537,7 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
           regionColors,
           manualCenterOverrides,
           activeAllianceId,
+          season,
           updatedAt: serverTimestamp(),
         };
         await setDoc(doc(db, 'users', userId, 'territory_map', 'main'), payload);
@@ -510,7 +551,7 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
         clearTimeout(saveTimerRef.current);
       }
     };
-  }, [userId, alliances, regionColors, manualCenterOverrides, activeAllianceId]);
+  }, [userId, alliances, regionColors, manualCenterOverrides, activeAllianceId, season]);
 
   // Color Legend: filter alliances that have at least one territory in regionColors
   const visibleAlliances = alliances.filter(a =>
@@ -723,7 +764,7 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
       setCopyStatus('error');
       setTimeout(() => setCopyStatus('idle'), 3000);
     }
-  }, [alliances, regionColors]);
+  }, [alliances, regionColors, REGION_DATA]);
 
 
   // --- FUNKCJA 1: Obliczanie domyślnych centrów (BBox lub stałe REGION_DATA) ---
@@ -754,7 +795,7 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
       }
     });
     return defaults;
-  }, []);
+  }, [REGION_DATA]);
 
   // === WCZYTANIE DANYCH Z FIRESTORE przy starcie aplikacji ===
   // Handled by onSnapshot effect above — no localStorage needed
@@ -844,7 +885,7 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
         path.style.filter = 'none';
       }
     });
-  }, [regionColors, alliances, hoveredRegion]);
+  }, [regionColors, alliances, hoveredRegion, REGION_DATA]);
 
   // --- Handlery ---
   const handlePathClick = (e: React.MouseEvent<SVGPathElement>) => {
@@ -1083,7 +1124,7 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
         acc[region.id] = region.number; 
         return acc;
     }, {} as Record<string, number>);
-}, []);
+}, [REGION_DATA]);
 
 
 // ✨ NOWA FUNKCJA: Obliczanie punktacji dla sojuszy
@@ -1180,20 +1221,10 @@ const allianceScores = calculateAllianceScores();
                 >
                   <Redo2 size={16} />
                 </button>
-                <a
-                  href="/teritorymap/v4/"
-                  className="ml-2 px-2 py-1 rounded text-xs font-medium bg-surface-hover hover:bg-surface-hover/80 text-gray-200 border border-surface-border hover:border-[rgba(155,48,255,0.4)] transition-colors duration-150 no-underline"
-                  title="Season 1 (OPESCO)"
-                >
-                  Season 1
-                </a>
               </div>
             )}
           </div>
           <div className="flex items-center gap-3">
-            <a href="/teritorymap/v4/" className="text-text-muted hover:text-text-emphasis text-sm no-underline md:hidden" title="Season 1 (OPESCO)">
-              S1
-            </a>
             <a href="/" className="text-text-muted hover:text-text-emphasis text-sm no-underline">
               &larr; Back to ArcBot
             </a>
@@ -1212,6 +1243,10 @@ const allianceScores = calculateAllianceScores();
             <span className="text-sm text-text-muted">
               Active: <span className="font-semibold text-white">{alliances.find(a => a.id === activeAllianceId)?.name}</span>
             </span>
+            <div className="flex items-center gap-1 ml-2">
+              <button onClick={() => setSeason('s1')} className={`px-2 py-0.5 rounded text-xs font-medium ${season === 's1' ? 'bg-accent-purple text-white' : 'bg-surface-hover text-text-muted hover:text-text-emphasis'}`}>S1</button>
+              <button onClick={() => setSeason('s6')} className={`px-2 py-0.5 rounded text-xs font-medium ${season === 's6' ? 'bg-accent-purple text-white' : 'bg-surface-hover text-text-muted hover:text-text-emphasis'}`}>S6</button>
+            </div>
             <div className="flex items-center gap-0.5 ml-auto">
               <button
                 onClick={undo}
@@ -1266,7 +1301,7 @@ const allianceScores = calculateAllianceScores();
               <svg 
                 ref={svgRef}
                 xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 1116 910"
+                viewBox={mapViewBox}
                 className={`border-2 rounded-lg bg-gray-500 w-full h-auto md:w-[200%] md:relative md:left-1/2 md:-translate-x-1/2 ${isEditingCenters ? 'cursor-crosshair border-red-500' : 'border-gray-100'}`}
                 onClick={(e) => {
                   if (isEditingCenters) {
@@ -1439,6 +1474,19 @@ const allianceScores = calculateAllianceScores();
             <div>
               <h1 className="text-2xl font-heading font-bold mb-2 text-text-emphasis">Alliance Map Manager</h1>
               <p className="text-sm text-text-muted">Strategic Map Control</p>
+              <div className="hidden md:flex items-center gap-2 mt-3">
+                <span 
+                  className="w-3 h-3 rounded-full border border-gray-500"
+                  style={{ backgroundColor: alliances.find(a => a.id === activeAllianceId)?.color }}
+                ></span>
+                <span className="text-sm text-text-muted">
+                  Active: <span className="font-semibold text-white">{alliances.find(a => a.id === activeAllianceId)?.name}</span>
+                </span>
+                <div className="flex items-center gap-1 ml-2">
+                  <button onClick={() => setSeason('s1')} className={`px-2 py-0.5 rounded text-xs font-medium ${season === 's1' ? 'bg-accent-purple text-white' : 'bg-surface-hover text-text-muted hover:text-text-emphasis'}`}>S1</button>
+                  <button onClick={() => setSeason('s6')} className={`px-2 py-0.5 rounded text-xs font-medium ${season === 's6' ? 'bg-accent-purple text-white' : 'bg-surface-hover text-text-muted hover:text-text-emphasis'}`}>S6</button>
+                </div>
+              </div>
             </div>
 
             <button
