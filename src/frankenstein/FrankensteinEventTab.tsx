@@ -443,7 +443,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
           position: 'absolute',
           top: 8,
           left: 8,
-          zIndex: 30,
+          zIndex: 31,
           display: 'flex',
           flexDirection: 'column',
           gap: 4,
@@ -453,7 +453,6 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
           border: '1px solid #2a2a3a',
           padding: toolsOpen ? '6px 8px' : '6px 10px',
           boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-          maxWidth: toolsOpen ? 'calc(100vw - 290px)' : 'calc(100vw - 280px)',
         }}
         onMouseDown={(e) => e.stopPropagation()}
       >
