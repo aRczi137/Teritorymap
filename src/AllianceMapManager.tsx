@@ -75,16 +75,6 @@ function getBuffIcon(category: Buff['category']) {
   return BUFF_ICON_MAP[category] || BUFF_ICON_MAP.wood;
 }
 
-function lightenHex(hex: string, percent: number): string {
-  if (!hex || !hex.startsWith('#') || hex.length < 7) return hex;
-  const h = hex.slice(1);
-  const r = parseInt(h.substr(0, 2), 16);
-  const g = parseInt(h.substr(2, 2), 16);
-  const b = parseInt(h.substr(4, 2), 16);
-  const l = (c: number) => Math.min(255, Math.round(c + (255 - c) * percent / 100));
-  return '#' + [l(r), l(g), l(b)].map(v => v.toString(16).padStart(2, '0')).join('');
-}
-
 function darkenHex(hex: string, percent: number): string {
   if (!hex || !hex.startsWith('#') || hex.length < 7) return hex;
   const h = hex.slice(1);
@@ -502,6 +492,7 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
   const [territoryLevels, setTerritoryLevels] = useState<Record<string, number>>({});
   const [levelPositions, setLevelPositions] = useState<Record<string, RegionCenter>>({});
   const [buildings, setBuildings] = useState<Building[]>([]);
+  const [lockedRegions, setLockedRegions] = useState<string[]>([]);
   const [devtoolsOpen, setDevtoolsOpen] = useState(false); // toggle: devtools mode ON/OFF
   const [editingLevelRegion, setEditingLevelRegion] = useState<string | null>(null);
   const [draggingLevel, setDraggingLevel] = useState<{ regionId: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
@@ -559,6 +550,7 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
           if (data.territoryLevels) setTerritoryLevels(data.territoryLevels);
           if (data.levelPositions) setLevelPositions(data.levelPositions);
           if (data.buildings) setBuildings(data.buildings);
+          if (data.lockedRegions) setLockedRegions(data.lockedRegions);
         }
       },
       (_error) => {}
@@ -604,6 +596,7 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
     levels: Record<string, number>,
     positions: Record<string, RegionCenter>,
     blgs: Building[],
+    locks?: string[],
   ) => {
     if (!isAdmin) return;
     try {
@@ -611,10 +604,11 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
         territoryLevels: levels,
         levelPositions: positions,
         buildings: blgs,
+        lockedRegions: locks ?? lockedRegions,
         updatedAt: serverTimestamp(),
       });
     } catch (_err) {}
-  }, [isAdmin]);
+  }, [isAdmin, lockedRegions]);
 
   // Color Legend: filter alliances that have at least one territory in regionColors
   const visibleAlliances = alliances.filter(a =>
@@ -927,26 +921,28 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
       const regionId = region.id;
       const allianceId = regionColors[regionId];
       
-      if (allianceId) {
+      if (lockedRegions.includes(regionId)) {
+        path.style.fill = darkenHex('#c78b58', 30);
+        path.style.fillOpacity = '1';
+      } else if (allianceId) {
         const alliance = alliances.find(a => a.id === allianceId);
         if (alliance) {
           path.style.fill = `url(#alliance-grad-${alliance.id})`;
           path.style.fillOpacity = '1';
-          path.style.stroke = lightenHex(alliance.color, 50);
-          path.style.strokeWidth = '2.5';
-          path.style.strokeLinejoin = 'round';
         }
       } else {
         if (season === 's6') {
           path.style.fill = darkenHex('#c78b58', 15);
-          path.style.fillOpacity = '1';
+          path.style.fillOpacity = '0.9';
         } else {
           path.style.fill = '#d1d5db';
           path.style.fillOpacity = '0.5';
         }
-        path.style.stroke = '#3a3a4a';
-        path.style.strokeWidth = '1';
       }
+      
+      path.style.stroke = darkenHex('#c78b58', 35);
+      path.style.strokeWidth = '3';
+      path.style.strokeLinejoin = 'round';
       
       if (hoveredRegion === regionId) {
         path.style.stroke = '#ffffff';
@@ -986,6 +982,9 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
       setEditingLevelRegion(editingLevelRegion === regionId ? null : regionId);
       return;
     }
+
+    // Locked territories cannot be assigned
+    if (season === 's6' && lockedRegions.includes(regionId)) return;
 
     // Jeśli region już należy do aktywnego sojuszu, usuń go
     if (regionColors[regionId] === activeAllianceId) {
@@ -1482,8 +1481,8 @@ const allianceScores = calculateAllianceScores();
                 <defs>
                   {alliances.map(alliance => (
                     <radialGradient key={alliance.id} id={`alliance-grad-${alliance.id}`} cx="50%" cy="50%" r="70%">
-                      <stop offset="0%" stopColor={darkenHex(alliance.color, 25)} stopOpacity={1} />
-                      <stop offset="85%" stopColor={alliance.color} stopOpacity={1} />
+                      <stop offset="0%" stopColor={darkenHex(alliance.color, 25)} stopOpacity={0.9} />
+                      <stop offset="85%" stopColor={alliance.color} stopOpacity={0.9} />
                     </radialGradient>
                   ))}
                 </defs>
@@ -1511,11 +1510,11 @@ const allianceScores = calculateAllianceScores();
                         onTouchEnd={handleTouchEnd} 
                         style={{
                             fill: season === 's6' ? darkenHex('#c78b58', 15) : '#d1d5db',
-                            fillOpacity: season === 's6' ? 1 : 0.5,
-                            stroke: '#3a3a4a', 
-                            strokeWidth: 1, 
+                            fillOpacity: season === 's6' ? 0.9 : 0.5,
+                            stroke: darkenHex('#c78b58', 35), 
+                            strokeWidth: 3, 
                             transition: 'all 0.2s', 
-                            cursor: isEditingCenters || buildingPlacementMode ? 'crosshair' : 'pointer',
+                            cursor: isEditingCenters || buildingPlacementMode ? 'crosshair' : (season === 's6' && lockedRegions.includes(region.id) ? 'default' : 'pointer'),
                         }} 
                       >
                         {/* Tooltip for desktop — S1 only */}
@@ -1579,7 +1578,7 @@ const allianceScores = calculateAllianceScores();
                               setDraggingLevel({ regionId: region.id, startX: t.clientX, startY: t.clientY, origX: pos.x, origY: pos.y });
                              } : undefined}
                           >
-                            {season === 's6' ? (territoryLevels[region.id] ?? 1) : region.number}
+                            {season === 's6' ? (lockedRegions.includes(region.id) ? '' : (territoryLevels[region.id] ?? 1)) : region.number}
                           </text>
                           {/* BUFF ICON — S1 only */}
                           {season !== 's6' && PERMANENT_BUFFS[region.id] && (() => {
@@ -2091,6 +2090,18 @@ const allianceScores = calculateAllianceScores();
               className="w-14 px-2 py-1 rounded border border-surface-border bg-surface-bg text-text-emphasis text-center outline-none"
             />
             <span className="text-text-muted">Level</span>
+            <button
+              onClick={() => {
+                const next = lockedRegions.includes(editingLevelRegion)
+                  ? lockedRegions.filter(id => id !== editingLevelRegion)
+                  : [...lockedRegions, editingLevelRegion];
+                setLockedRegions(next);
+                saveS6Data(territoryLevels, levelPositions, buildings, next);
+              }}
+              className={`px-2 py-0.5 rounded text-xs font-medium ${lockedRegions.includes(editingLevelRegion) ? 'bg-red-700 text-white' : 'bg-surface-hover text-text-muted'}`}
+            >
+              {lockedRegions.includes(editingLevelRegion) ? 'Unlock' : 'Lock'}
+            </button>
             <button onClick={() => setEditingLevelRegion(null)}
               className="px-2 py-0.5 rounded bg-surface-hover text-text-muted hover:text-white">✕</button>
           </div>
