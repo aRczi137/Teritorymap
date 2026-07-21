@@ -85,6 +85,16 @@ function lightenHex(hex: string, percent: number): string {
   return '#' + [l(r), l(g), l(b)].map(v => v.toString(16).padStart(2, '0')).join('');
 }
 
+function darkenHex(hex: string, percent: number): string {
+  if (!hex || !hex.startsWith('#') || hex.length < 7) return hex;
+  const h = hex.slice(1);
+  const r = parseInt(h.substr(0, 2), 16);
+  const g = parseInt(h.substr(2, 2), 16);
+  const b = parseInt(h.substr(4, 2), 16);
+  const d = (c: number) => Math.max(0, Math.round(c * (100 - percent) / 100));
+  return '#' + [d(r), d(g), d(b)].map(v => v.toString(16).padStart(2, '0')).join('');
+}
+
 // --- LISTA DOSTĘPNYCH BUFÓW ---
 const AVAILABLE_BUFFS: Buff[] = [
   { id: 'wood_output_5', name: '+5% Wood Output/h', category: 'wood', icon: '🪵' },
@@ -922,13 +932,18 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
         if (alliance) {
           path.style.fill = `url(#alliance-grad-${alliance.id})`;
           path.style.fillOpacity = '1';
-          path.style.stroke = lightenHex(alliance.color, 45);
+          path.style.stroke = lightenHex(alliance.color, 50);
           path.style.strokeWidth = '2.5';
           path.style.strokeLinejoin = 'round';
         }
       } else {
-        path.style.fill = season === 's6' ? '#9ca3af' : '#d1d5db';
-        path.style.fillOpacity = season === 's6' ? '0.2' : '0.5';
+        if (season === 's6') {
+          path.style.fill = darkenHex('#c78b58', 15);
+          path.style.fillOpacity = '1';
+        } else {
+          path.style.fill = '#d1d5db';
+          path.style.fillOpacity = '0.5';
+        }
         path.style.stroke = '#3a3a4a';
         path.style.strokeWidth = '1';
       }
@@ -1466,9 +1481,9 @@ const allianceScores = calculateAllianceScores();
               >
                 <defs>
                   {alliances.map(alliance => (
-                    <radialGradient key={alliance.id} id={`alliance-grad-${alliance.id}`} cx="50%" cy="50%" r="60%">
-                      <stop offset="0%" stopColor={alliance.color} stopOpacity={0.8} />
-                      <stop offset="100%" stopColor={lightenHex(alliance.color, 45)} stopOpacity={0.3} />
+                    <radialGradient key={alliance.id} id={`alliance-grad-${alliance.id}`} cx="50%" cy="50%" r="70%">
+                      <stop offset="0%" stopColor={darkenHex(alliance.color, 25)} stopOpacity={1} />
+                      <stop offset="85%" stopColor={alliance.color} stopOpacity={1} />
                     </radialGradient>
                   ))}
                 </defs>
@@ -1495,8 +1510,8 @@ const allianceScores = calculateAllianceScores();
                         onTouchStart={() => handleTouchStart(region.id)}
                         onTouchEnd={handleTouchEnd} 
                         style={{
-                            fill: season === 's6' ? '#6b7280' : '#d1d5db',
-                            fillOpacity: season === 's6' ? 0.3 : 0.5,
+                            fill: season === 's6' ? darkenHex('#c78b58', 15) : '#d1d5db',
+                            fillOpacity: season === 's6' ? 1 : 0.5,
                             stroke: '#3a3a4a', 
                             strokeWidth: 1, 
                             transition: 'all 0.2s', 
