@@ -911,7 +911,7 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
         const ys = nums.filter((_, i) => i % 2 === 1);
         return (Math.max(...xs) - Math.min(...xs)) * (Math.max(...ys) - Math.min(...ys));
       };
-      return area(a) - area(b);
+      return area(b) - area(a);
     });
   }, [REGION_DATA]);
 
