@@ -159,16 +159,23 @@ export function TemplateListModal({ isOpen, onClose, loadLayout }: TemplateListM
                   </span>
                 </div>
                 {t.placedPlayers.length > 0 && (() => {
-                  const maxX = Math.max(...t.placedPlayers.map(p => p.position.col), 0) + 1;
-                  const maxY = Math.max(...t.placedPlayers.map(p => p.position.row), 0) + 1;
-                  const scale = Math.min(60 / maxX, 60 / maxY, 6);
+                  const allCols = [...t.placedPlayers.map(p => p.position.col), t.frankyPosition.col, t.frankyPosition.col + 4];
+                  const allRows = [...t.placedPlayers.map(p => p.position.row), t.frankyPosition.row, t.frankyPosition.row + 4];
+                  const minX = Math.min(...allCols, 0);
+                  const minY = Math.min(...allRows, 0);
+                  const maxX = Math.max(...allCols, 0) + 1;
+                  const maxY = Math.max(...allRows, 0) + 1;
+                  const w = maxX - minX;
+                  const h = maxY - minY;
+                  const scale = Math.min(60 / w, 60 / h, 6);
                   return (
-                    <svg width={maxX * scale} height={maxY * scale} style={{ flexShrink: 0, marginLeft: 8, borderRadius: 2, background: 'rgba(0,0,0,0.3)' }}>
+                    <svg width={w * scale} height={h * scale} style={{ flexShrink: 0, marginLeft: 8, borderRadius: 2, background: 'rgba(0,0,0,0.3)' }}>
                       {t.placedPlayers.map(pp => {
                         const player = t.players.find(p => p.id === pp.playerId);
                         const color = player ? (LEVEL_COLORS[player.level] || '#cbd5e1') : '#cbd5e1';
-                        return <rect key={pp.playerId} x={pp.position.col * scale} y={pp.position.row * scale} width={scale} height={scale} fill={color} opacity={0.85} rx={1} />;
+                        return <rect key={pp.playerId} x={(pp.position.col - minX) * scale} y={(pp.position.row - minY) * scale} width={scale} height={scale} fill={color} opacity={0.85} rx={1} />;
                       })}
+                      <rect x={(t.frankyPosition.col - minX) * scale} y={(t.frankyPosition.row - minY) * scale} width={4 * scale} height={4 * scale} fill="#fbbf24" opacity={1} rx={scale} />
                     </svg>
                   );
                 })()}

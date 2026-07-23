@@ -478,6 +478,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
           position: 'absolute',
           top: 8,
           left: 8,
+          maxWidth: 'calc(100vw - 20px)',
           zIndex: 31,
           display: 'flex',
           flexDirection: 'column',
@@ -574,7 +575,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
                 focus:outline-none focus:ring-2 focus:ring-accent-purple
                 transition-colors duration-150"
             >
-
+              Load template
             </button>
             {isAdmin && (
             <button
