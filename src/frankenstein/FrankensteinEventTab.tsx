@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Pencil, Plus, X, Check, ChevronUp, ChevronDown } from 'lucide-react';
-import type { DragSource, DragState, GridPosition, PlayerLevel } from './types';
+import { Pencil, Plus, X, Check, ChevronUp, ChevronDown, Code } from 'lucide-react';
+import type { DragSource, DragState, GridPosition, PlayerLevel, Player, PlacedPlayer, GhostSlot } from './types';
 import { PLAYER_LEVELS, LEVEL_COLORS } from './types';
 import { useFrankyLayout } from './useFrankyLayout';
 import GridCanvas from './GridCanvas';
@@ -8,7 +8,9 @@ import { ResetModal } from './ResetModal';
 import { buildExportFilename } from './exportUtils';
 import { runOcrOnImage, type ParsedPlayer } from './ocrImport';
 import { OcrPreviewModal } from './OcrPreviewModal';
-import { trackOcrImport, trackPlayerAdd, trackHiveExport } from '../analytics';
+import { trackOcrImport, trackPlayerAdd, trackHiveExport, trackTemplateLoad } from '../analytics';
+import { TemplateListModal } from './TemplateListModal';
+import { SaveTemplateModal } from './SaveTemplateModal';
 
 /** Base cell size used by GridCanvas (must match) */
 const CELL_SIZE = 40;
@@ -395,6 +397,44 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
 
   // ── Reset modal ────────────────────────────────────────────────────────────
   const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [templateModalOpen, setTemplateModalOpen] = useState(false);
+  const [saveTemplateModalOpen, setSaveTemplateModalOpen] = useState(false);
+
+  const isAdmin = userId === import.meta.env.VITE_ADMIN_DISCORD_ID || userId === import.meta.env.VITE_ADMIN_DISCORD_ID_2;
+  const [ghosts, setGhosts] = useState<GhostSlot[]>([]);
+
+  // Developer mode
+  const [developerMode, setDeveloperMode] = useState(false);
+  const savedPlayersRef = useRef<{ players: Player[]; placed: PlacedPlayer[] } | null>(null);
+
+  const handleLoadTemplateGhosts = useCallback((template: { players: Player[]; placedPlayers: PlacedPlayer[] }) => {
+    const slots: GhostSlot[] = template.placedPlayers.map(pp => {
+      const player = template.players.find(p => p.id === pp.playerId);
+      return { position: pp.position, level: player?.level || 'I2' as PlayerLevel };
+    });
+    setGhosts(slots);
+    setTemplateModalOpen(false);
+    if (slots.length > 0) trackTemplateLoad('ghosts');
+  }, []);
+
+  const toggleDeveloperMode = useCallback(() => {
+    if (developerMode) {
+      if (savedPlayersRef.current) {
+        loadLayout({players:savedPlayersRef.current.players,placedPlayers:savedPlayersRef.current.placed,frankyPosition,gridConfig});
+        savedPlayersRef.current=null;
+      }
+    } else {
+      savedPlayersRef.current={players:[...players],placed:[...placedPlayers]};
+      const np=[];
+      for(let j=0;j<100;j++){
+        const id="dev-"+j;
+        np.push({id,name:"Player "+(j+1),level:"I2" as PlayerLevel,color:"#cbd5e1"});
+      }
+      loadLayout({players:np,placedPlayers:[],frankyPosition,gridConfig});
+    }
+    setDeveloperMode(v=>!v);
+  },[developerMode,players,placedPlayers,frankyPosition,gridConfig,loadLayout]);
+
 
   const handleResetConfirm = () => {
     resetLayout();
@@ -422,6 +462,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
         dragState={dragState}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
+      ghosts={ghosts}
         exportRef={exportRef}
         zoom={zoom}
         pan={pan}
@@ -437,7 +478,8 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
           position: 'absolute',
           top: 8,
           left: 8,
-          zIndex: 30,
+          maxWidth: 'calc(100vw - 20px)',
+          zIndex: 31,
           display: 'flex',
           flexDirection: 'column',
           gap: 4,
@@ -447,7 +489,6 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
           border: '1px solid #2a2a3a',
           padding: toolsOpen ? '6px 8px' : '6px 10px',
           boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-          maxWidth: toolsOpen ? 'calc(100vw - 290px)' : 'calc(100vw - 280px)',
         }}
         onMouseDown={(e) => e.stopPropagation()}
       >
@@ -473,7 +514,18 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
           TOOLS
           {toolsOpen ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
         </button>
-        {toolsOpen && (
+        {toolsOpen && ghosts.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            <button
+              type="button"
+              onClick={() => setGhosts([])}
+              className="px-2 py-1 rounded text-xs font-medium bg-red-800 hover:bg-red-700 text-white border border-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors duration-150"
+            >
+              Clear ghosts ({ghosts.length})
+            </button>
+          </div>
+        )}
+        {toolsOpen &&  (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
             <button
               type="button"
@@ -517,6 +569,25 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
             </button>
             <button
               type="button"
+              onClick={() => setTemplateModalOpen(true)}
+              className="px-2 py-1 rounded text-xs font-medium bg-surface-hover hover:bg-surface-hover/80
+                text-gray-200 border border-surface-border hover:border-[rgba(155,48,255,0.4)]
+                focus:outline-none focus:ring-2 focus:ring-accent-purple
+                transition-colors duration-150"
+            >
+              Load template
+            </button>
+            {isAdmin && (
+            <button
+              type="button"
+              onClick={toggleDeveloperMode}
+              className={"px-2 py-1 rounded text-xs font-medium " + (developerMode ? "bg-green-700 text-white border-green-500" : "bg-surface-hover hover:bg-surface-hover/80 text-gray-200 border-surface-border") + " border focus:outline-none focus:ring-2 focus:ring-green-400 transition-colors duration-150"}
+            >
+              <span className="flex items-center gap-1"><Code size={12} /> {developerMode ? "Dev ON" : "Dev"}</span>
+            </button>
+            )}
+            <button
+              type="button"
               onClick={handleImportFromImage}
               disabled={ocrProgress !== null}
               className="px-2 py-1 rounded text-xs font-medium bg-amber-600 hover:bg-amber-500
@@ -526,6 +597,18 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
             >
               {ocrProgress !== null ? `OCR ${ocrProgress}%` : 'Import from image'}
             </button>
+            {(isAdmin || developerMode) && (
+              <button
+                type="button"
+                onClick={() => setSaveTemplateModalOpen(true)}
+                className="px-2 py-1 rounded text-xs font-medium bg-surface-hover hover:bg-surface-hover/80
+                  text-gray-200 border border-purple-600 hover:border-purple-400
+                  focus:outline-none focus:ring-2 focus:ring-accent-purple
+                  transition-colors duration-150"
+              >
+                Save as Template
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -536,7 +619,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
           position: 'absolute',
           top: 8,
           right: 8,
-          zIndex: 30,
+          zIndex: 32,
           display: 'flex',
           flexDirection: 'column',
           gap: 6,
@@ -546,7 +629,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
           border: '1px solid #2a2a3a',
           padding: panelOpen ? '8px 10px' : '6px 10px',
           boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-          maxWidth: panelOpen ? 'min(240px, calc(100vw - 140px))' : 'min(200px, calc(100vw - 120px))',
+          maxWidth: panelOpen ? 'min(280px, calc(100vw - 16px))' : 'min(200px, calc(100vw - 16px))',
           maxHeight: panelOpen ? 'calc(100vh - 80px)' : 'auto',
           overflow: 'hidden',
         }}
@@ -758,6 +841,14 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
               return (
                 <div
                   key={p.id}
+                  draggable
+                  onDragStart={(e) => {
+                    const source: DragSource = { type: 'panel', playerId: p.id };
+                    e.dataTransfer.setData('application/json', JSON.stringify(source));
+                    e.dataTransfer.effectAllowed = 'move';
+                    setDragState({ source, hoverPosition: null });
+                  }}
+                  onDragEnd={() => setDragState(null)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -766,6 +857,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
                     borderRadius: 5,
                     background: 'rgba(255,255,255,0.04)',
                     border: '1px solid rgba(255,255,255,0.06)',
+                    cursor: isPlaced ? 'default' : 'grab',
                   }}
                 >
                   <div style={{ width: 10, height: 10, borderRadius: 2, background: p.color, flexShrink: 0 }} />
@@ -778,7 +870,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
                   {/* Edit button */}
                   <button
                     type="button"
-                    onClick={() => startEditing(p)}
+                    onClick={(e) => { e.stopPropagation(); startEditing(p); }}
                     title="Edit player"
                     style={{
                       width: 16,
@@ -805,18 +897,18 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
                   {!isPlaced && (
                     <button
                       type="button"
-                      onClick={() => placePlayerOnGrid(p.id)}
+                      onClick={(e) => { e.stopPropagation(); placePlayerOnGrid(p.id); }}
                       title="Place on grid"
                       style={{
-                        width: 16,
-                        height: 16,
+                        width: 28,
+                        height: 28,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        background: 'transparent',
+                        background: '#22c55e',
                         border: 'none',
-                        borderRadius: 3,
-                        color: '#22c55e',
+                        borderRadius: 5,
+                        color: '#fff',
                         fontSize: 14,
                         lineHeight: 1,
                         cursor: 'pointer',
@@ -830,7 +922,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
                   )}
                   <button
                     type="button"
-                    onClick={() => removePlayer(p.id)}
+                    onClick={(e) => { e.stopPropagation(); removePlayer(p.id); }}
                     title="Remove player"
                     style={{
                       width: 16,
@@ -930,6 +1022,21 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
           onCancel={handleOcrCancel}
         />
       )}
+
+      <TemplateListModal
+        isOpen={templateModalOpen}
+        onClose={() => setTemplateModalOpen(false)}
+        loadLayout={handleLoadTemplateGhosts}
+      />
+
+      <SaveTemplateModal
+        isOpen={saveTemplateModalOpen}
+        onClose={() => setSaveTemplateModalOpen(false)}
+        players={players}
+        placedPlayers={placedPlayers}
+        frankyPosition={frankyPosition}
+        gridConfig={gridConfig}
+      />
     </div>
   );
 }

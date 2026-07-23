@@ -48,3 +48,11 @@ export function trackOcrImport() {
 export function trackPlayerPlace() {
   trackEvent('player_place_on_grid');
 }
+
+export function trackTemplateLoad(templateId: string) {
+  trackEvent('template_load', { template_id: templateId });
+}
+
+export function trackTemplateSave() {
+  trackEvent('template_save');
+}

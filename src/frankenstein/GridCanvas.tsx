@@ -7,10 +7,12 @@ import type {
   DragState,
 } from './types';
 import { hasCollision, hasCollisionWithFranky, isOutOfBounds, PLAYER_BLOCK_SIZE, FRANKY_BLOCK_SIZE } from './gridUtils';
+import { LEVEL_COLORS } from './types';
 import PlayerBlock from './PlayerBlock';
 import FrankyBlock from './FrankyBlock';
 
 interface GridCanvasProps {
+  ghosts?: import('./types').GhostSlot[];
   cols: number;
   rows: number;
   placedPlayers: PlacedPlayer[];
@@ -103,6 +105,7 @@ const GridCanvas: React.FC<GridCanvasProps> = ({
   onPanChange,
   onFrankyMove,
   onPlayerMove,
+  ghosts,
 }) => {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -636,6 +639,36 @@ const GridCanvas: React.FC<GridCanvasProps> = ({
                 onDragStart={handleBlockDragStart}
                 isDragging={isDragging}
               />
+            </div>
+          );
+        })}
+
+        {/* Ghost template placeholders */}
+        {ghosts?.map((g, i) => {
+          const lvl = g.level || 'I2';
+          const lvlIdx = Object.keys(LEVEL_COLORS).indexOf(lvl);
+          const colors = Object.values(LEVEL_COLORS);
+          const color = lvlIdx >= 0 ? colors[lvlIdx] : '#cbd5e1';
+          return (
+            <div key={'ghost-' + i} style={{
+              position: 'absolute',
+              left: g.position.col * CELL_SIZE + 1,
+              top: g.position.row * CELL_SIZE + 1,
+              width: CELL_SIZE * PLAYER_BLOCK_SIZE - 2,
+              height: CELL_SIZE * PLAYER_BLOCK_SIZE - 2,
+              border: '2px dashed ' + color,
+              borderRadius: 4,
+              opacity: 0.35,
+              zIndex: 3,
+              pointerEvents: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: 14,
+              fontWeight: 'bold',
+            }}>
+              {lvl}
             </div>
           );
         })}
