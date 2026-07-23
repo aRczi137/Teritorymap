@@ -400,7 +400,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
   const [saveTemplateModalOpen, setSaveTemplateModalOpen] = useState(false);
 
-  const isAdmin = userId === import.meta.env.VITE_ADMIN_DISCORD_ID;
+  const isAdmin = userId === import.meta.env.VITE_ADMIN_DISCORD_ID || userId === import.meta.env.VITE_ADMIN_DISCORD_ID_2;
   const [ghosts, setGhosts] = useState<GhostSlot[]>([]);
 
   // Developer mode
@@ -425,13 +425,12 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
       }
     } else {
       savedPlayersRef.current={players:[...players],placed:[...placedPlayers]};
-      const np=[],npp=[];
+      const np=[];
       for(let j=0;j<100;j++){
         const id="dev-"+j;
         np.push({id,name:"Player "+(j+1),level:"I2" as PlayerLevel,color:"#cbd5e1"});
-        npp.push({playerId:id,position:{col:j%10*2,row:~~(j/10)*2}});
       }
-      loadLayout({players:np,placedPlayers:npp,frankyPosition,gridConfig});
+      loadLayout({players:np,placedPlayers:[],frankyPosition,gridConfig});
     }
     setDeveloperMode(v=>!v);
   },[developerMode,players,placedPlayers,frankyPosition,gridConfig,loadLayout]);
@@ -577,6 +576,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
             >
 
             </button>
+            {isAdmin && (
             <button
               type="button"
               onClick={toggleDeveloperMode}
@@ -584,6 +584,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
             >
               <span className="flex items-center gap-1"><Code size={12} /> {developerMode ? "Dev ON" : "Dev"}</span>
             </button>
+            )}
             <button
               type="button"
               onClick={handleImportFromImage}
@@ -839,6 +840,14 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
               return (
                 <div
                   key={p.id}
+                  draggable
+                  onDragStart={(e) => {
+                    const source: DragSource = { type: 'panel', playerId: p.id };
+                    e.dataTransfer.setData('application/json', JSON.stringify(source));
+                    e.dataTransfer.effectAllowed = 'move';
+                    setDragState({ source, hoverPosition: null });
+                  }}
+                  onDragEnd={() => setDragState(null)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -847,6 +856,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
                     borderRadius: 5,
                     background: 'rgba(255,255,255,0.04)',
                     border: '1px solid rgba(255,255,255,0.06)',
+                    cursor: isPlaced ? 'default' : 'grab',
                   }}
                 >
                   <div style={{ width: 10, height: 10, borderRadius: 2, background: p.color, flexShrink: 0 }} />
@@ -859,7 +869,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
                   {/* Edit button */}
                   <button
                     type="button"
-                    onClick={() => startEditing(p)}
+                    onClick={(e) => { e.stopPropagation(); startEditing(p); }}
                     title="Edit player"
                     style={{
                       width: 16,
@@ -886,7 +896,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
                   {!isPlaced && (
                     <button
                       type="button"
-                      onClick={() => placePlayerOnGrid(p.id)}
+                      onClick={(e) => { e.stopPropagation(); placePlayerOnGrid(p.id); }}
                       title="Place on grid"
                       style={{
                         width: 16,
@@ -911,7 +921,7 @@ export function FrankensteinEventTab({ isActive, userId }: FrankensteinEventTabP
                   )}
                   <button
                     type="button"
-                    onClick={() => removePlayer(p.id)}
+                    onClick={(e) => { e.stopPropagation(); removePlayer(p.id); }}
                     title="Remove player"
                     style={{
                       width: 16,

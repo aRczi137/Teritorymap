@@ -507,7 +507,7 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
   const [editingLevelRegion, setEditingLevelRegion] = useState<string | null>(null);
   const [draggingLevel, setDraggingLevel] = useState<{ regionId: string; startX: number; startY: number; origX: number; origY: number } | null>(null);
   const [buildingPlacementMode, setBuildingPlacementMode] = useState(false);
-  const isAdmin = userId === import.meta.env.VITE_ADMIN_DISCORD_ID;
+  const isAdmin = userId === import.meta.env.VITE_ADMIN_DISCORD_ID || userId === import.meta.env.VITE_ADMIN_DISCORD_ID_2;
   
   // Undo/Redo history state
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -517,6 +517,18 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
 
   // Firestore sync ref
   const isInitializedRef = useRef(false);
+
+  // Refs for latest S6 state to avoid stale closure in async saveS6Data
+  const lockedRegionsRef = useRef<string[]>([]);
+  const territoryLevelsRef = useRef<Record<string, number>>({});
+  const levelPositionsRef = useRef<Record<string, RegionCenter>>({});
+  const buildingsRef = useRef<Building[]>([]);
+
+  // Keep refs in sync with state for saveS6Data
+  useEffect(() => { lockedRegionsRef.current = lockedRegions; }, [lockedRegions]);
+  useEffect(() => { territoryLevelsRef.current = territoryLevels; }, [territoryLevels]);
+  useEffect(() => { levelPositionsRef.current = levelPositions; }, [levelPositions]);
+  useEffect(() => { buildingsRef.current = buildings; }, [buildings]);
 
   // Firestore onSnapshot — load map data
   useEffect(() => {
@@ -614,11 +626,13 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
         territoryLevels: levels,
         levelPositions: positions,
         buildings: blgs,
-        lockedRegions: locks ?? lockedRegions,
+        lockedRegions: locks ?? lockedRegionsRef.current,
         updatedAt: serverTimestamp(),
       });
-    } catch (_err) {}
-  }, [isAdmin, lockedRegions]);
+    } catch (err) {
+      console.error('[saveS6Data] Firestore write failed:', err);
+    }
+  }, [isAdmin]);
 
   // Color Legend: filter alliances that have at least one territory in regionColors
   const visibleAlliances = alliances.filter(a =>
@@ -1245,8 +1259,8 @@ const AllianceMapManager: React.FC<{ userId: string; initialTab?: 'map' | 'frank
   // Auto-save S6 data when dragging ends
   useEffect(() => {
     if (draggingLevel !== null) return;
-    if (isAdmin && season === 's6' && Object.keys(levelPositions).length > 0) {
-      saveS6Data(territoryLevels, levelPositions, buildings);
+    if (isAdmin && season === 's6' && Object.keys(levelPositionsRef.current).length > 0) {
+      saveS6Data(territoryLevelsRef.current, levelPositionsRef.current, buildingsRef.current);
     }
   }, [draggingLevel]);
 
